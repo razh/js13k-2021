@@ -12,6 +12,7 @@ module.exports = {
   rules: {
     'arrow-body-style': ['error', 'as-needed'],
     'func-style': 'error',
+    'no-restricted-syntax': ['error', 'VariableDeclaration[kind!="var"]'],
     'object-shorthand': 'error',
   },
 };
