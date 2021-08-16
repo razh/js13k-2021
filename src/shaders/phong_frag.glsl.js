@@ -33,7 +33,7 @@ struct GeometricContext {
 in vec3 vColor;
 
 uniform vec3 fogColor;
-in vec3 fogPosition;
+in vec3 vFogPosition;
 uniform float fogNear;
 uniform float fogFar;
 
@@ -57,8 +57,8 @@ float D_BlinnPhong(const in float shininess, const in float dotNH) {
 vec3 BRDF_Specular_BlinnPhong(const in IncidentLight incidentLight, const in GeometricContext geometry, const in vec3 specularColor, const in float shininess) {
   vec3 halfDir = normalize(incidentLight.direction + geometry.viewDir);
   float dotNH = saturate(dot(geometry.normal, halfDir));
-  float dotLH = saturate(dot(incidentLight.direction, halfDir));
-  vec3 F = F_Schlick(specularColor, dotLH);
+  float dotVH = saturate(dot(geometry.viewDir, halfDir));
+  vec3 F = F_Schlick(specularColor, dotVH);
   float G = G_BlinnPhong_Implicit();
   float D = D_BlinnPhong(shininess, dotNH);
   return F * (G * D);
@@ -136,7 +136,7 @@ void main() {
 
   vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + emissive;
 
-  float fogDepth = length(fogPosition);
+  float fogDepth = length(vFogPosition);
   float fogFactor = smoothstep(fogNear, fogFar, fogDepth);
   color = vec4(mix(outgoingLight, fogColor, fogFactor), 1.0);
 }

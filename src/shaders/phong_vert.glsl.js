@@ -12,7 +12,7 @@ out vec3 vViewPosition;
 in vec3 color;
 out vec3 vColor;
 
-out vec3 fogPosition;
+out vec3 vFogPosition;
 
 void main() {
   vColor.xyz = color.xyz;
@@ -22,6 +22,6 @@ void main() {
   gl_Position = projectionMatrix * mvPosition;
   vViewPosition = -mvPosition.xyz;
 
-  fogPosition = mvPosition.xyz;
+  vFogPosition = mvPosition.xyz;
 }
 `.trim();
