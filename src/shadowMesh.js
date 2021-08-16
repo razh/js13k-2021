@@ -9,12 +9,10 @@ var w = 0.001;
 
 var shadowMaterial = material_create();
 
-export var shadowMesh_create = mesh => {
-  return {
-    ...mesh_create(mesh.geometry, shadowMaterial),
-    mesh,
-  };
-};
+export var shadowMesh_create = mesh => ({
+  ...mesh_create(mesh.geometry, shadowMaterial),
+  mesh,
+});
 
 // amount of light-ray divergence. Ranging from:
 // 0.001 = sunlight(min divergence) to 1.0 = pointlight(max divergence)

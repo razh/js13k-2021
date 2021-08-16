@@ -55,15 +55,16 @@ var relativeAlignBoxVertices = (geomA, indicesA, geomB, indicesB) => {
 export var align = rearg(alignBoxVertices);
 export var relativeAlign = rearg(relativeAlignBoxVertices);
 
-var transformBoxVertices = (method, identity = vec3_create()) => {
-  return (geom, ...vectors) => {
-    vectors.map(([indices, delta]) => {
-      setVector(_vector, delta, identity);
-      indices.map(index => method(geom.vertices[index], _vector));
-    });
+var transformBoxVertices = (method, identity = vec3_create()) => (
+  geom,
+  ...vectors
+) => {
+  vectors.map(([indices, delta]) => {
+    setVector(_vector, delta, identity);
+    indices.map(index => method(geom.vertices[index], _vector));
+  });
 
-    return geom;
-  };
+  return geom;
 };
 
 export var $translate = rearg(transformBoxVertices(vec3_add));
@@ -71,18 +72,17 @@ export var $scale = rearg(
   transformBoxVertices(vec3_multiply, vec3_create(1, 1, 1)),
 );
 
-var transformAxisBoxVertices = (method, identity = vec3_create()) => {
-  return axis => {
-    return (geom, ...vectors) => {
-      vectors.map(([indices, delta = identity[axis]]) => {
-        Object.assign(_vector, identity);
-        _vector[axis] = delta;
-        indices.map(index => method(geom.vertices[index], _vector));
-      });
+var transformAxisBoxVertices = (method, identity = vec3_create()) => axis => (
+  geom,
+  ...vectors
+) => {
+  vectors.map(([indices, delta = identity[axis]]) => {
+    Object.assign(_vector, identity);
+    _vector[axis] = delta;
+    indices.map(index => method(geom.vertices[index], _vector));
+  });
 
-      return geom;
-    };
-  };
+  return geom;
 };
 
 var translateAxisBoxVertices = transformAxisBoxVertices(vec3_add);
@@ -91,14 +91,12 @@ export var $translateX = rearg(translateAxisBoxVertices('x'));
 export var $translateY = rearg(translateAxisBoxVertices('y'));
 export var $translateZ = rearg(translateAxisBoxVertices('z'));
 
-var callBoxVertices = method => {
-  return (geom, ...vectors) => {
-    vectors.map(([indices, value]) =>
-      indices.map(index => method(geom.vertices[index], value)),
-    );
+var callBoxVertices = method => (geom, ...vectors) => {
+  vectors.map(([indices, value]) =>
+    indices.map(index => method(geom.vertices[index], value)),
+  );
 
-    return geom;
-  };
+  return geom;
 };
 
 export var $set = rearg(callBoxVertices(vec3_fromArray));

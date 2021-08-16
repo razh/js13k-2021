@@ -25,20 +25,18 @@ var _v1 = vec3_create();
 var _q1 = quat_create();
 var _m1 = mat4_create();
 
-export var object3d_create = () => {
-  return {
-    parent: undefined,
-    children: [],
-    components: [],
-    position: vec3_create(),
-    quaternion: quat_create(),
-    scale: vec3_create(1, 1, 1),
-    matrix: mat4_create(),
-    matrixWorld: mat4_create(),
-    modelViewMatrix: mat4_create(),
-    visible: true,
-  };
-};
+export var object3d_create = () => ({
+  parent: undefined,
+  children: [],
+  components: [],
+  position: vec3_create(),
+  quaternion: quat_create(),
+  scale: vec3_create(1, 1, 1),
+  matrix: mat4_create(),
+  matrixWorld: mat4_create(),
+  modelViewMatrix: mat4_create(),
+  visible: true,
+});
 
 export var object3d_lookAt = (object, vector) => {
   mat4_lookAt(_m1, vector, object.position, vec3_Y);
@@ -66,17 +64,14 @@ export var object3d_rotateOnAxis = (obj, axis, angle) => {
   return obj;
 };
 
-export var object3d_rotateX = (obj, angle) => {
-  return object3d_rotateOnAxis(obj, vec3_X, angle);
-};
+export var object3d_rotateX = (obj, angle) =>
+  object3d_rotateOnAxis(obj, vec3_X, angle);
 
-export var object3d_rotateY = (obj, angle) => {
-  return object3d_rotateOnAxis(obj, vec3_Y, angle);
-};
+export var object3d_rotateY = (obj, angle) =>
+  object3d_rotateOnAxis(obj, vec3_Y, angle);
 
-export var object3d_rotateZ = (obj, angle) => {
-  return object3d_rotateOnAxis(obj, vec3_Z, angle);
-};
+export var object3d_rotateZ = (obj, angle) =>
+  object3d_rotateOnAxis(obj, vec3_Z, angle);
 
 export var object3d_translateOnAxis = (obj, axis, distance) => {
   // translate object by distance along axis in object space
@@ -86,17 +81,14 @@ export var object3d_translateOnAxis = (obj, axis, distance) => {
   return obj;
 };
 
-export var object3d_translateX = (obj, distance) => {
-  return object3d_translateOnAxis(obj, vec3_X, distance);
-};
+export var object3d_translateX = (obj, distance) =>
+  object3d_translateOnAxis(obj, vec3_X, distance);
 
-export var object3d_translateY = (obj, distance) => {
-  return object3d_translateOnAxis(obj, vec3_Y, distance);
-};
+export var object3d_translateY = (obj, distance) =>
+  object3d_translateOnAxis(obj, vec3_Y, distance);
 
-export var object3d_translateZ = (obj, distance) => {
-  return object3d_translateOnAxis(obj, vec3_Z, distance);
-};
+export var object3d_translateZ = (obj, distance) =>
+  object3d_translateOnAxis(obj, vec3_Z, distance);
 
 export var object3d_traverse = (obj, callback) => {
   callback(obj);

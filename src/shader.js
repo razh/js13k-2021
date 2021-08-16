@@ -29,17 +29,14 @@ export var setFloat32Attribute = (gl, location, buffer, size) => {
   gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0);
 };
 
-export var setFloatUniform = (gl, location, value) => {
+export var setFloatUniform = (gl, location, value) =>
   gl.uniform1f(location, value);
-};
 
-export var setMat4Uniform = (gl, location, array) => {
+export var setMat4Uniform = (gl, location, array) =>
   gl.uniformMatrix4fv(location, false, array);
-};
 
-export var setVec3Uniform = (gl, location, vector) => {
+export var setVec3Uniform = (gl, location, vector) =>
   gl.uniform3f(location, vector.x, vector.y, vector.z);
-};
 
 export var getAttributeLocations = (gl, program) => {
   var locations = {};

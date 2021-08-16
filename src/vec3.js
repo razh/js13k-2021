@@ -1,10 +1,4 @@
-export var vec3_create = (x = 0, y = 0, z = 0) => {
-  return {
-    x,
-    y,
-    z,
-  };
-};
+export var vec3_create = (x = 0, y = 0, z = 0) => ({ x, y, z });
 
 var _vector = vec3_create();
 
@@ -37,9 +31,7 @@ export var vec3_setZ = (v, z) => {
   return v;
 };
 
-export var vec3_clone = v => {
-  return vec3_create(v.x, v.y, v.z);
-};
+export var vec3_clone = v => vec3_create(v.x, v.y, v.z);
 
 export var vec3_add = (a, b) => {
   a.x += b.x;
@@ -138,9 +130,8 @@ export var vec3_transformDirection = (v, m) => {
   return vec3_normalize(v);
 };
 
-export var vec3_divideScalar = (v, scalar) => {
-  return vec3_multiplyScalar(v, 1 / scalar);
-};
+export var vec3_divideScalar = (v, scalar) =>
+  vec3_multiplyScalar(v, 1 / scalar);
 
 export var vec3_min = (a, b) => {
   a.x = Math.min(a.x, b.x);
@@ -170,21 +161,14 @@ export var vec3_negate = v => {
   return v;
 };
 
-export var vec3_dot = (a, b) => {
-  return a.x * b.x + a.y * b.y + a.z * b.z;
-};
+export var vec3_dot = (a, b) => a.x * b.x + a.y * b.y + a.z * b.z;
 
-export var vec3_length = v => {
-  return Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-};
+export var vec3_length = v => Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 
-export var vec3_normalize = v => {
-  return vec3_divideScalar(v, vec3_length(v) || 1);
-};
+export var vec3_normalize = v => vec3_divideScalar(v, vec3_length(v) || 1);
 
-export var vec3_setLength = (v, length) => {
-  return vec3_multiplyScalar(vec3_normalize(v), length);
-};
+export var vec3_setLength = (v, length) =>
+  vec3_multiplyScalar(vec3_normalize(v), length);
 
 export var vec3_lerp = (a, b, t) => {
   a.x += (b.x - a.x) * t;
@@ -193,9 +177,8 @@ export var vec3_lerp = (a, b, t) => {
   return a;
 };
 
-export var vec3_lerpVectors = (v, a, b, t) => {
-  return vec3_add(vec3_multiplyScalar(vec3_subVectors(v, b, a), t), a);
-};
+export var vec3_lerpVectors = (v, a, b, t) =>
+  vec3_add(vec3_multiplyScalar(vec3_subVectors(v, b, a), t), a);
 
 export var vec3_cross = (a, b) => {
   var { x, y, z } = a;
@@ -223,21 +206,18 @@ export var vec3_crossVectors = (v, a, b) => {
   return v;
 };
 
-export var vec3_reflect = (v, normal) => {
+export var vec3_reflect = (v, normal) =>
   // reflect incident vector off plane orthogonal to normal
   // normal is assumed to have unit length
-  return vec3_sub(
+  vec3_sub(
     v,
     vec3_multiplyScalar(
       Object.assign(_vector, normal),
       2 * vec3_dot(v, normal),
     ),
   );
-};
 
-export var vec3_distanceTo = (a, b) => {
-  return Math.sqrt(vec3_distanceToSquared(a, b));
-};
+export var vec3_distanceTo = (a, b) => Math.sqrt(vec3_distanceToSquared(a, b));
 
 export var vec3_distanceToSquared = (a, b) => {
   var dx = a.x - b.x,
@@ -253,9 +233,7 @@ export var vec3_setFromMatrixPosition = (v, m) => {
   return v;
 };
 
-export var vec3_equals = (a, b) => {
-  return a.x === b.x && a.y === b.y && a.z === b.z;
-};
+export var vec3_equals = (a, b) => a.x === b.x && a.y === b.y && a.z === b.z;
 
 export var vec3_fromArray = (v, array) => {
   v.x = array[0];

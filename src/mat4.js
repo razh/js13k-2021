@@ -12,15 +12,14 @@ var _x = vec3_create();
 var _y = vec3_create();
 var _z = vec3_create();
 
-export var mat4_create = () => {
+export var mat4_create = () =>
   // prettier-ignore
-  return new Float32Array([
+  new Float32Array([
     1, 0, 0, 0,
     0, 1, 0, 0,
     0, 0, 1, 0,
     0, 0, 0, 1,
   ]);
-};
 
 export var mat4_identity = m => {
   // prettier-ignore
@@ -39,9 +38,8 @@ export var mat4_copy = (a, b) => {
   return a;
 };
 
-export var mat4_makeRotationFromQuaternion = (m, q) => {
-  return mat4_compose(m, _zero, q, _one);
-};
+export var mat4_makeRotationFromQuaternion = (m, q) =>
+  mat4_compose(m, _zero, q, _one);
 
 export var mat4_lookAt = (m, eye, target, up) => {
   vec3_subVectors(_z, eye, target);

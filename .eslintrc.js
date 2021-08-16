@@ -10,6 +10,7 @@ module.exports = {
     sourceType: 'module',
   },
   rules: {
+    'arrow-body-style': ['error', 'as-needed'],
     'func-style': 'error',
     'object-shorthand': 'error',
   },

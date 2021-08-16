@@ -25,12 +25,13 @@ var _inverseMatrix = mat4_create();
 var _intersectionPoint = vec3_create();
 var _intersectionPointWorld = vec3_create();
 
-export var ray_create = (origin = vec3_create(), direction = vec3_create()) => {
-  return {
-    origin,
-    direction,
-  };
-};
+export var ray_create = (
+  origin = vec3_create(),
+  direction = vec3_create(),
+) => ({
+  origin,
+  direction,
+});
 
 export var ray_copy = (a, b) => {
   Object.assign(a.origin, b.origin);
@@ -38,12 +39,11 @@ export var ray_copy = (a, b) => {
   return a;
 };
 
-export var ray_at = (ray, t, target = vec3_create()) => {
-  return vec3_add(
+export var ray_at = (ray, t, target = vec3_create()) =>
+  vec3_add(
     vec3_multiplyScalar(Object.assign(target, ray.direction), t),
     ray.origin,
   );
-};
 
 export var ray_intersectBox = (ray, box, target) => {
   var { origin, direction } = ray;
@@ -193,8 +193,7 @@ export var ray_applyMatrix4 = (r, m) => {
   return r;
 };
 
-export var ray_intersectObjects = (ray, objects) => {
-  return objects
+export var ray_intersectObjects = (ray, objects) =>
+  objects
     .flatMap(object => ray_intersectMesh(ray, object))
     .sort((a, b) => a.distance - b.distance);
-};

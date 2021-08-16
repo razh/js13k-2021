@@ -1,13 +1,6 @@
 import { clamp } from './math.js';
 
-export var quat_create = (x = 0, y = 0, z = 0, w = 1) => {
-  return {
-    x,
-    y,
-    z,
-    w,
-  };
-};
+export var quat_create = (x = 0, y = 0, z = 0, w = 1) => ({ x, y, z, w });
 
 export var quat_set = (q, x, y, z, w) => {
   q.x = x;
@@ -113,9 +106,8 @@ export var quat_setFromRotationMatrix = (q, m) => {
   return q;
 };
 
-export var quat_angleTo = (a, b) => {
-  return 2 * Math.acos(Math.abs(clamp(quat_dot(a, b), -1, 1)));
-};
+export var quat_angleTo = (a, b) =>
+  2 * Math.acos(Math.abs(clamp(quat_dot(a, b), -1, 1)));
 
 export var quat_rotateTowards = (a, b, step) => {
   var angle = quat_angleTo(a, b);
@@ -129,13 +121,10 @@ export var quat_rotateTowards = (a, b, step) => {
   return a;
 };
 
-export var quat_dot = (a, b) => {
-  return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
-};
+export var quat_dot = (a, b) => a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 
-export var quat_length = q => {
-  return Math.sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
-};
+export var quat_length = q =>
+  Math.sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
 
 export var quat_normalize = q => {
   var l = quat_length(q);

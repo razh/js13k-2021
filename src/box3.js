@@ -12,12 +12,7 @@ var _vector = vec3_create();
 export var box3_create = (
   min = vec3_create(Infinity, Infinity, Infinity),
   max = vec3_create(-Infinity, -Infinity, -Infinity),
-) => {
-  return {
-    min,
-    max,
-  };
-};
+) => ({ min, max });
 
 export var box3_copy = (a, b) => {
   Object.assign(a.min, b.min);
@@ -61,32 +56,27 @@ export var box3_setFromObject = (box, object) => {
   return box;
 };
 
-export var box3_containsPoint = (box, point) => {
+export var box3_containsPoint = (box, point) =>
   // prettier-ignore
-  return (
-    box.min.x <= point.x && point.x <= box.max.x &&
+  box.min.x <= point.x && point.x <= box.max.x &&
     box.min.y <= point.y && point.y <= box.max.y &&
-    box.min.z <= point.z && point.z <= box.max.z
-  );
-};
+    box.min.z <= point.z && point.z <= box.max.z;
 
-export var box3_intersectsBox = (a, b) => {
+export var box3_intersectsBox = (a, b) =>
   // prettier-ignore
-  return !(
+  !(
     a.max.x < b.min.x || a.min.x > b.max.x ||
     a.max.y < b.min.y || a.min.y > b.max.y ||
     a.max.z < b.min.z || a.min.z > b.max.z
   );
-};
 
-export var box3_overlapsBox = (a, b) => {
+export var box3_overlapsBox = (a, b) =>
   // prettier-ignore
-  return !(
+  !(
     a.max.x <= b.min.x || a.min.x >= b.max.x ||
     a.max.y <= b.min.y || a.min.y >= b.max.y ||
     a.max.z <= b.min.z || a.min.z >= b.max.z
   );
-};
 
 export var box3_translate = (box, offset) => {
   vec3_add(box.min, offset);

@@ -10,12 +10,10 @@ import {
 
 var _vector = vec3_create();
 
-export var geom_create = () => {
-  return {
-    vertices: [],
-    faces: [],
-  };
-};
+export var geom_create = () => ({
+  vertices: [],
+  faces: [],
+});
 
 export var geom_push = (geom, vertices, faces) => {
   var offset = geom.vertices.length;
