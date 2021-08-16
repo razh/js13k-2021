@@ -33,12 +33,11 @@ import {
   vec3_transformDirection,
 } from './vec3.js';
 
-var gl = canvas.getContext('webgl');
+var gl = canvas.getContext('webgl2');
 
 gl.clearColor(0, 0, 0, 0);
 gl.enable(gl.DEPTH_TEST);
 gl.enable(gl.CULL_FACE);
-gl.getExtension('OES_standard_derivatives');
 
 var running = false;
 
@@ -132,7 +131,6 @@ var renderMesh = mesh => {
 
   gl.drawArrays(gl.TRIANGLES, 0, bufferGeom.position.length / 3);
 };
-
 
 var lightDirection = vec3_create();
 

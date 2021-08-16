@@ -1,16 +1,18 @@
 export default `
+#version 300 es
+
 precision highp float;
 precision highp int;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
-attribute vec3 position;
-varying vec3 vViewPosition;
+in vec3 position;
+out vec3 vViewPosition;
 
-attribute vec3 color;
-varying vec3 vColor;
+in vec3 color;
+out vec3 vColor;
 
-varying vec3 fogPosition;
+out vec3 fogPosition;
 
 void main() {
   vColor.xyz = color.xyz;

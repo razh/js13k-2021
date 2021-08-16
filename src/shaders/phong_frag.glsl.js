@@ -1,5 +1,5 @@
 export default `
-#extension GL_OES_standard_derivatives : enable
+#version 300 es
 
 precision highp float;
 precision highp int;
@@ -30,10 +30,10 @@ struct GeometricContext {
   vec3 viewDir;
 };
 
-varying vec3 vColor;
+in vec3 vColor;
 
 uniform vec3 fogColor;
-varying vec3 fogPosition;
+in vec3 fogPosition;
 uniform float fogNear;
 uniform float fogFar;
 
@@ -82,7 +82,7 @@ void getDirectionalDirectLightIrradiance(const in DirectionalLight directionalLi
   directLight.direction = directionalLight.direction;
 }
 
-varying vec3 vViewPosition;
+in vec3 vViewPosition;
 
 struct BlinnPhongMaterial {
   vec3 diffuseColor;
@@ -100,6 +100,8 @@ void RE_Direct_BlinnPhong(const in IncidentLight directLight, const in Geometric
 void RE_IndirectDiffuse_BlinnPhong(const in vec3 irradiance, const in GeometricContext geometry, const in BlinnPhongMaterial material, inout ReflectedLight reflectedLight) {
   reflectedLight.indirectDiffuse += irradiance * BRDF_Diffuse_Lambert(material.diffuseColor);
 }
+
+out vec4 color;
 
 void main() {
   vec3 diffuseColor = diffuse;
@@ -136,6 +138,6 @@ void main() {
 
   float fogDepth = length(fogPosition);
   float fogFactor = smoothstep(fogNear, fogFar, fogDepth);
-  gl_FragColor = vec4(mix(outgoingLight, fogColor, fogFactor), 1.0);
+  color = vec4(mix(outgoingLight, fogColor, fogFactor), 1.0);
 }
 `.trim();
