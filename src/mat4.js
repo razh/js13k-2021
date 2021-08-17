@@ -160,7 +160,7 @@ export var mat4_setPosition = (m, v) => {
   return m;
 };
 
-export var mat4_getInverse = (a, b) => {
+export var mat4_invert = (a, b) => {
   // based on http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm
   var [
     n11,

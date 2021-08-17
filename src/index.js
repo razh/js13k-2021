@@ -5,7 +5,7 @@ import { camera_create, camera_updateProjectionMatrix } from './camera.js';
 import { controls_create } from './controls.js';
 import { entity_update } from './entity.js';
 import { map0 } from './maps.js';
-import { mat4_getInverse, mat4_multiplyMatrices } from './mat4.js';
+import { mat4_invert, mat4_multiplyMatrices } from './mat4.js';
 import {
   object3d_create,
   object3d_traverse,
@@ -136,7 +136,7 @@ var lightDirection = vec3_create();
 
 var render = () => {
   object3d_updateWorldMatrix(scene);
-  mat4_getInverse(camera.matrixWorldInverse, camera.matrixWorld);
+  mat4_invert(camera.matrixWorldInverse, camera.matrixWorld);
 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 

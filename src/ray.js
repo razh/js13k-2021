@@ -1,4 +1,4 @@
-import { mat4_create, mat4_getInverse } from './mat4.js';
+import { mat4_create, mat4_invert } from './mat4.js';
 import {
   vec3_add,
   vec3_applyMatrix4,
@@ -162,7 +162,7 @@ var _ray = ray_create();
 export var ray_intersectMesh = (ray, object) => {
   var intersections = [];
 
-  mat4_getInverse(_inverseMatrix, object.matrixWorld);
+  mat4_invert(_inverseMatrix, object.matrixWorld);
   ray_applyMatrix4(ray_copy(_ray, ray), _inverseMatrix);
 
   var { vertices, faces } = object.geometry;
