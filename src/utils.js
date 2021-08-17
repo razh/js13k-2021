@@ -1,4 +1,4 @@
-export var compose = (...fns) =>
+export var flow = (...fns) =>
   fns.reduceRight(
     (f, g) => (...args) => f(g(...args)),
     _ => _,
