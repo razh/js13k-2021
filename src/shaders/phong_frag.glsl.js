@@ -4,6 +4,7 @@ export default `
 precision highp float;
 precision highp int;
 
+#define PI 3.141592653589793
 #define RECIPROCAL_PI 0.31830988618
 #define saturate(a) clamp(a, 0.0, 1.0)
 
@@ -67,6 +68,7 @@ vec3 BRDF_Specular_BlinnPhong(const in IncidentLight incidentLight, const in Geo
 uniform vec3 ambientLightColor;
 vec3 getAmbientLightIrradiance(const in vec3 ambientLightColor) {
   vec3 irradiance = ambientLightColor;
+  irradiance *= PI;
   return irradiance;
 }
 
@@ -93,6 +95,7 @@ struct BlinnPhongMaterial {
 void RE_Direct_BlinnPhong(const in IncidentLight directLight, const in GeometricContext geometry, const in BlinnPhongMaterial material, inout ReflectedLight reflectedLight) {
   float dotNL = saturate(dot(geometry.normal, directLight.direction));
   vec3 irradiance = dotNL * directLight.color;
+  irradiance *= PI;
   reflectedLight.directDiffuse += irradiance * BRDF_Diffuse_Lambert(material.diffuseColor);
   reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(directLight, geometry, material.specularColor, material.specularShininess);
 }
