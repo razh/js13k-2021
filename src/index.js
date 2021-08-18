@@ -54,11 +54,7 @@ pointerLock_create(controls_create(camera), canvas);
 var lights = map0(gl, scene, camera);
 
 // Shader
-var program = createShaderProgram(
-  gl,
-  vert,
-  frag.replace(/NUM_DIR_LIGHTS/g, lights.directional.length),
-);
+var program = createShaderProgram(gl, vert, frag);
 
 gl.useProgram(program);
 
