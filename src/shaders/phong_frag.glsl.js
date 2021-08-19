@@ -42,9 +42,9 @@ vec3 BRDF_Diffuse_Lambert(const in vec3 diffuseColor) {
   return RECIPROCAL_PI * diffuseColor;
 }
 
-vec3 F_Schlick(const in vec3 specularColor, const in float dotLH) {
-  float fresnel = exp2((-5.55473 * dotLH - 6.98316) * dotLH);
-  return (1.0 - specularColor) * fresnel + specularColor;
+vec3 F_Schlick(const in vec3 f0, const in float f90, const in float dotVH) {
+  float fresnel = exp2((-5.55473 * dotVH - 6.98316) * dotVH);
+  return f0 * (1.0 - fresnel) + (f90 * fresnel);
 }
 
 float G_BlinnPhong_Implicit() {
@@ -59,7 +59,7 @@ vec3 BRDF_Specular_BlinnPhong(const in IncidentLight incidentLight, const in Geo
   vec3 halfDir = normalize(incidentLight.direction + geometry.viewDir);
   float dotNH = saturate(dot(geometry.normal, halfDir));
   float dotVH = saturate(dot(geometry.viewDir, halfDir));
-  vec3 F = F_Schlick(specularColor, dotVH);
+  vec3 F = F_Schlick(specularColor, 1.0, dotVH);
   float G = G_BlinnPhong_Implicit();
   float D = D_BlinnPhong(shininess, dotNH);
   return F * (G * D);
