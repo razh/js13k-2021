@@ -77,7 +77,7 @@ struct DirectionalLight {
   vec3 color;
 };
 
-uniform DirectionalLight directionalLights[1];
+uniform DirectionalLight directionalLight;
 
 void getDirectionalDirectLightIrradiance(const in DirectionalLight directionalLight, const in GeometricContext geometry, out IncidentLight directLight) {
   directLight.color = directionalLight.color;
@@ -128,7 +128,7 @@ void main() {
 
   IncidentLight directLight;
 
-  getDirectionalDirectLightIrradiance(directionalLights[0], geometry, directLight);
+  getDirectionalDirectLightIrradiance(directionalLight, geometry, directLight);
   RE_Direct_BlinnPhong(directLight, geometry, material, reflectedLight);
 
   vec3 irradiance = getAmbientLightIrradiance(ambientLightColor);

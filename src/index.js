@@ -51,7 +51,7 @@ scene.fogFar = 1000;
 var camera = camera_create(90);
 pointerLock_create(controls_create(camera), canvas);
 
-var lights = map0(gl, scene, camera);
+var { ambient, directional } = map0(gl, scene, camera);
 
 // Shader
 var program = createShaderProgram(gl, vert, frag);
@@ -128,7 +128,8 @@ var renderMesh = mesh => {
   gl.drawArrays(gl.TRIANGLES, 0, bufferGeom.position.length / 3);
 };
 
-var lightDirection = vec3_create();
+var vector3 = vec3_create();
+var direction = vec3_create();
 
 var render = () => {
   object3d_updateWorldMatrix(scene);
@@ -136,34 +137,26 @@ var render = () => {
 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  setVec3Uniform(gl, uniforms.ambient, lights.ambient);
+  // Ambient light.
+  setVec3Uniform(gl, uniforms.ambient, ambient);
 
-  lights.directional.map((light, index) => {
-    var temp = vec3_create();
+  // Directional light.
+  vec3_setFromMatrixPosition(direction, directional.matrixWorld);
+  vec3_setFromMatrixPosition(vector3, directional.target.matrixWorld);
+  vec3_transformDirection(
+    vec3_sub(direction, vector3),
+    camera.matrixWorldInverse,
+  );
 
-    var direction = vec3_setFromMatrixPosition(
-      lightDirection,
-      light.matrixWorld,
-    );
-    vec3_setFromMatrixPosition(temp, light.target.matrixWorld);
-    vec3_transformDirection(
-      vec3_sub(direction, temp),
-      camera.matrixWorldInverse,
-    );
+  var color = vec3_multiplyScalar(
+    Object.assign(vector3, directional.color),
+    directional.intensity,
+  );
 
-    var color = vec3_multiplyScalar(
-      Object.assign(temp, light.color),
-      light.intensity,
-    );
+  setVec3Uniform(gl, uniforms[`directionalLight.direction`], direction);
+  setVec3Uniform(gl, uniforms[`directionalLight.color`], color);
 
-    setVec3Uniform(
-      gl,
-      uniforms[`directionalLights[${index}].direction`],
-      direction,
-    );
-    setVec3Uniform(gl, uniforms[`directionalLights[${index}].color`], color);
-  });
-
+  // Objects.
   object3d_traverse(scene, object => {
     if (object.visible && object.geometry && object.material) {
       renderMesh(object);

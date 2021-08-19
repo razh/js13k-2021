@@ -16,11 +16,9 @@ export var map0 = (gl, scene, camera) => {
   // Lights
   var ambient = vec3_create(0.5, 0.5, 0.5);
 
-  var light0 = light_create(vec3_create(1, 1, 1));
-  vec3_set(light0.position, 512, 1024, 512);
-
-  var directional = [light0];
-  directional.map(light => object3d_add(map, light));
+  var directional = light_create(vec3_create(1, 1, 1));
+  vec3_set(directional.position, 512, 1024, 512);
+  object3d_add(map, directional);
 
   // Camera
   var cameraObject = object3d_create();
