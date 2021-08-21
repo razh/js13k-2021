@@ -17,7 +17,7 @@ export var map0 = (gl, scene, camera) => {
   var ambient = vec3_create(0.5, 0.5, 0.5);
 
   var directional = light_create(vec3_create(1, 1, 1));
-  vec3_set(directional.position, 512, 1024, 512);
+  vec3_set(directional.position, 128, 256, -128);
   object3d_add(map, directional);
 
   // Camera
@@ -29,6 +29,10 @@ export var map0 = (gl, scene, camera) => {
 
   var mesh = mesh_create(boxGeom_create(8, 8, 8), material_create());
   object3d_add(scene, mesh);
+
+  var floorMesh = mesh_create(boxGeom_create(256, 8, 256), material_create());
+  floorMesh.position.y = -8;
+  object3d_add(scene, floorMesh);
 
   entity_add(
     map,

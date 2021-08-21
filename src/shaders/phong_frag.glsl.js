@@ -31,6 +31,16 @@ struct GeometricContext {
   vec3 viewDir;
 };
 
+const float UnpackDownscale = 255. / 256.;
+
+const vec3 PackFactors = vec3(256. * 256. * 256., 256. * 256., 256.);
+
+const vec4 UnpackFactors = UnpackDownscale / vec4(PackFactors, 1.);
+
+float unpackRGBAToDepth(const in vec4 v) {
+  return dot(v, UnpackFactors);
+}
+
 in vec3 vColor;
 
 uniform vec3 fogColor;
@@ -104,6 +114,34 @@ void RE_IndirectDiffuse_BlinnPhong(const in vec3 irradiance, const in GeometricC
   reflectedLight.indirectDiffuse += irradiance * BRDF_Diffuse_Lambert(material.diffuseColor);
 }
 
+uniform sampler2D directionalShadowMap;
+in vec4 vDirectionalShadowCoord;
+
+struct DirectionalLightShadow {
+  float shadowBias;
+  vec2 shadowMapSize;
+};
+
+uniform DirectionalLightShadow directionalLightShadow;
+
+float texture2DCompare(sampler2D depths, vec2 uv, float compare) {
+  return step(compare, unpackRGBAToDepth(texture(depths, uv)));
+}
+
+float getShadow(sampler2D shadowMap, vec2 shadowMapSize, float shadowBias, vec4 shadowCoord) {
+  float shadow = 1.0;
+  shadowCoord.xyz /= shadowCoord.w;
+  shadowCoord.z += shadowBias;
+  bvec4 inFrustumVec = bvec4(shadowCoord.x >= 0.0, shadowCoord.x <= 1.0, shadowCoord.y >= 0.0, shadowCoord.y <= 1.0);
+  bool inFrustum = all(inFrustumVec);
+  bvec2 frustumTestVec = bvec2(inFrustum, shadowCoord.z <= 1.0);
+  bool frustumTest = all(frustumTestVec);
+  if (frustumTest) {
+    shadow = texture2DCompare(shadowMap, shadowCoord.xy, shadowCoord.z);
+  }
+  return shadow;
+}
+
 out vec4 color;
 
 void main() {
@@ -129,6 +167,10 @@ void main() {
   IncidentLight directLight;
 
   getDirectionalDirectLightIrradiance(directionalLight, geometry, directLight);
+
+  // directLight.color *= receiveShadow ? getShadow(directionalShadowMap, directionalLightShadow.shadowMapSize, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[0]) : 1.0;
+  directLight.color *= getShadow(directionalShadowMap, directionalLightShadow.shadowMapSize, directionalLightShadow.shadowBias, vDirectionalShadowCoord);
+
   RE_Direct_BlinnPhong(directLight, geometry, material, reflectedLight);
 
   vec3 irradiance = getAmbientLightIrradiance(ambientLightColor);

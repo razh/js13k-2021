@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+      body {
+        margin: 0;
+        background: #000;
+        color: #fff;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://unpkg.com/three@0.131.3/build/three.js"></script>
+    <script>
+      const container = document.createElement("div");
+      document.body.append(container);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.BasicShadowMap;
+      container.append(renderer.domElement);
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        90,
+        window.innerWidth / window.innerHeight
+      );
+      camera.position.set(16, 16, 32);
+
+      const ambientLight = new THREE.AmbientLight(0.5, 0.5, 0.5);
+      scene.add(ambientLight);
+
+      const directionalLight = new THREE.DirectionalLight();
+      directionalLight.position.set(128, 256, -128);
+      directionalLight.castShadow = true;
+      scene.add(directionalLight);
+
+      const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(8, 8, 8),
+        new THREE.MeshPhongMaterial()
+      );
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+
+      const plane = new THREE.Mesh(
+        new THREE.BoxGeometry(256, 8, 256),
+        new THREE.MeshPhongMaterial()
+      );
+      plane.position.y = -8;
+      plane.castShadow = true;
+      plane.receiveShadow = true;
+      scene.add(plane);
+
+      renderer.render(scene, camera);
+      console.log(directionalLight.shadow.camera.projectionMatrix.elements);
+      console.log(directionalLight.shadow.camera.matrixWorld.elements);
+      console.log(directionalLight.shadow.camera.matrixWorldInverse.elements);
+
+      container.addEventListener("click", () => renderer.render(scene, camera));
+    </script>
+  </body>
+</html>

@@ -21,18 +21,6 @@ export var mat4_create = () =>
     0, 0, 0, 1,
   ]);
 
-export var mat4_identity = m => {
-  // prettier-ignore
-  m.set([
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    0, 0, 0, 1,
-  ]);
-
-  return m;
-};
-
 export var mat4_copy = (a, b) => {
   a.set(b);
   return a;
@@ -215,9 +203,7 @@ export var mat4_invert = (a, b) => {
 
   var det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
 
-  if (det === 0) {
-    return mat4_identity(a);
-  }
+  if (det === 0) return a.fill(0);
 
   var detInv = 1 / det;
 
