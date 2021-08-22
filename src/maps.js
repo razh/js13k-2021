@@ -30,6 +30,11 @@ export var map0 = (gl, scene, camera) => {
   var mesh = mesh_create(boxGeom_create(8, 8, 8), material_create());
   object3d_add(scene, mesh);
 
+  var mesh2 = mesh_create(boxGeom_create(8, 8, 8), material_create());
+  mesh2.position.x = 6;
+  mesh2.position.z = -8;
+  object3d_add(scene, mesh2);
+
   var floorMesh = mesh_create(boxGeom_create(256, 8, 256), material_create());
   floorMesh.position.y = -8;
   object3d_add(scene, floorMesh);

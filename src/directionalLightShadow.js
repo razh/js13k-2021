@@ -29,7 +29,4 @@ export var lightShadow_updateMatrices = (lightShadow, light) => {
 
   mat4_multiplyMatrices(matrix, matrix, camera.projectionMatrix);
   mat4_multiplyMatrices(matrix, matrix, camera.matrixWorldInverse);
-  console.log(camera.projectionMatrix);
-  console.log(camera.matrixWorld);
-  console.log(camera.matrixWorldInverse);
 };
