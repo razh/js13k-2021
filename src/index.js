@@ -224,7 +224,8 @@ gl.framebufferRenderbuffer(
   renderBuffer,
 );
 
-  gl.depthFunc(gl.LEQUAL);
+gl.depthFunc(gl.LEQUAL);
+
 var render = () => {
   object3d_updateWorldMatrix(scene);
   mat4_invert(camera.matrixWorldInverse, camera.matrixWorld);
