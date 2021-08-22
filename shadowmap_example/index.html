@@ -33,7 +33,7 @@
       );
       camera.position.set(16, 16, 32);
 
-      const ambientLight = new THREE.AmbientLight(0.5, 0.5, 0.5);
+      const ambientLight = new THREE.AmbientLight(new THREE.Color(0.5, 0.5, 0.5));
       scene.add(ambientLight);
 
       const directionalLight = new THREE.DirectionalLight();
