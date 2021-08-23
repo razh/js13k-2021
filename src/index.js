@@ -259,7 +259,7 @@ var render = () => {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   // Ambient light.
-  setVec3Uniform(gl, uniforms.ambient, ambient);
+  setVec3Uniform(gl, uniforms.ambientLightColor, ambient);
   gl.uniform1i(uniforms.directionalLightMap, 0);
 
   // Directional light.
