@@ -9,7 +9,6 @@ import {
 } from './directionalLightShadow.js';
 import { entity_update } from './entity.js';
 import { map0 } from './maps.js';
-import { mat3_getNormalMatrix } from './mat3.js';
 import { mat4_invert, mat4_multiplyMatrices } from './mat4.js';
 import {
   object3d_create,
@@ -25,9 +24,7 @@ import {
   getUniformLocations,
   setFloat32Attribute,
   setFloatUniform,
-  setMat3Uniform,
   setMat4Uniform,
-  setVec2Uniform,
   setVec3Uniform,
 } from './shader.js';
 import depthFrag from './shaders/depth_frag.glsl.js';
@@ -47,6 +44,7 @@ var gl = canvas.getContext('webgl2');
 gl.clearColor(0, 0, 0, 0);
 gl.enable(gl.DEPTH_TEST);
 gl.enable(gl.CULL_FACE);
+gl.depthFunc(gl.LEQUAL);
 
 var running = false;
 
@@ -61,15 +59,16 @@ var camera = camera_create(90);
 pointerLock_create(controls_create(camera), canvas);
 
 var { ambient, directional } = map0(gl, scene, camera);
+var lightShadow = lightShadow_create();
+lightShadow.camera.left = -128;
+lightShadow.camera.right = 128;
+lightShadow.camera.top = 128;
+lightShadow.camera.bottom = -128;
+orthoCamera_updateProjectionMatrix(lightShadow.camera);
 
 // Shader
 var program = createShaderProgram(gl, vert, frag);
-
 var depthProgram = createShaderProgram(gl, depthVert, depthFrag);
-
-var lightShadow = lightShadow_create();
-
-gl.useProgram(program);
 
 var attributes = getAttributeLocations(gl, program);
 var uniforms = getUniformLocations(gl, program);
@@ -77,111 +76,8 @@ var uniforms = getUniformLocations(gl, program);
 var depthAttributes = getAttributeLocations(gl, depthProgram);
 var depthUniforms = getUniformLocations(gl, depthProgram);
 
-var dt = 1 / 60;
-var accumulatedTime = 0;
-var previousTime;
-
-var update = () => {
-  var time = (performance.now() || 0) * 1e-3;
-  if (!previousTime) {
-    previousTime = time;
-  }
-
-  var frameTime = Math.min(time - previousTime, 0.1);
-  accumulatedTime += frameTime;
-  previousTime = time;
-
-  while (accumulatedTime >= dt) {
-    object3d_traverse(scene, object => {
-      entity_update(object, dt, scene);
-    });
-
-    accumulatedTime -= dt;
-  }
-};
-
-var bufferGeomBuffers = new WeakMap();
-
-var setFloat32AttributeBuffer = (name, location, bufferGeom, size) => {
-  var buffers = bufferGeomBuffers.get(bufferGeom) || {};
-  bufferGeomBuffers.set(bufferGeom, buffers);
-
-  var buffer = buffers[name] || createFloat32Buffer(gl, bufferGeom[name]);
-  buffers[name] = buffer;
-
-  setFloat32Attribute(gl, location, buffer, size);
-};
-
-var bufferGeoms = new WeakMap();
-
-var renderShadow = mesh => {
-  var { geometry } = mesh;
-
-  mat4_multiplyMatrices(
-    mesh.modelViewMatrix,
-    lightShadow.camera.matrixWorldInverse,
-    mesh.matrixWorld,
-  );
-
-  setMat4Uniform(gl, depthUniforms.modelViewMatrix, mesh.modelViewMatrix);
-  setMat4Uniform(
-    gl,
-    depthUniforms.projectionMatrix,
-    lightShadow.camera.projectionMatrix,
-  );
-
-  var bufferGeom = bufferGeoms.get(geometry) || bufferGeom_fromGeom(geometry);
-  bufferGeoms.set(geometry, bufferGeom);
-
-  setFloat32AttributeBuffer(
-    'position',
-    depthAttributes.position,
-    bufferGeom,
-    3,
-  );
-
-  gl.drawArrays(gl.TRIANGLES, 0, bufferGeom.position.length / 3);
-};
-
-var renderMesh = mesh => {
-  var { geometry, material } = mesh;
-
-  setVec3Uniform(gl, uniforms.fogColor, scene.fogColor);
-  setFloatUniform(gl, uniforms.fogNear, scene.fogNear);
-  setFloatUniform(gl, uniforms.fogFar, scene.fogFar);
-
-  setVec3Uniform(gl, uniforms.diffuse, material.color);
-  setVec3Uniform(gl, uniforms.specular, material.specular);
-  setFloatUniform(gl, uniforms.shininess, material.shininess);
-  setVec3Uniform(gl, uniforms.emissive, material.emissive);
-
-  mat4_multiplyMatrices(
-    mesh.modelViewMatrix,
-    camera.matrixWorldInverse,
-    mesh.matrixWorld,
-  );
-  mat3_getNormalMatrix(mesh.normalMatrix, mesh.modelViewMatrix);
-
-  setMat4Uniform(gl, uniforms.modelMatrix, mesh.matrixWorld);
-  setMat4Uniform(gl, uniforms.modelViewMatrix, mesh.modelViewMatrix);
-  setMat4Uniform(gl, uniforms.projectionMatrix, camera.projectionMatrix);
-  setMat3Uniform(gl, uniforms.normalMatrix, mesh.normalMatrix);
-
-  var bufferGeom = bufferGeoms.get(geometry) || bufferGeom_fromGeom(geometry);
-  bufferGeoms.set(geometry, bufferGeom);
-
-  setFloat32AttributeBuffer('position', attributes.position, bufferGeom, 3);
-  setFloat32AttributeBuffer('color', attributes.color, bufferGeom, 3);
-
-  gl.drawArrays(gl.TRIANGLES, 0, bufferGeom.position.length / 3);
-};
-
-var vector3 = vec3_create();
-var direction = vec3_create();
-
 var depthTexture = gl.createTexture();
-var depthTextureSize = 512;
-gl.activeTexture(gl.TEXTURE0);
+var depthTextureSize = 1024;
 gl.bindTexture(gl.TEXTURE_2D, depthTexture);
 gl.texImage2D(
   gl.TEXTURE_2D,
@@ -224,43 +120,141 @@ gl.framebufferRenderbuffer(
   renderBuffer,
 );
 
-gl.depthFunc(gl.LEQUAL);
+var dt = 1 / 60;
+var accumulatedTime = 0;
+var previousTime;
+
+var update = () => {
+  var time = (performance.now() || 0) * 1e-3;
+  if (!previousTime) {
+    previousTime = time;
+  }
+
+  var frameTime = Math.min(time - previousTime, 0.1);
+  accumulatedTime += frameTime;
+  previousTime = time;
+
+  while (accumulatedTime >= dt) {
+    object3d_traverse(scene, object => {
+      entity_update(object, dt, scene);
+    });
+
+    accumulatedTime -= dt;
+  }
+};
+
+var bufferGeomBuffers = new WeakMap();
+
+var setFloat32AttributeBuffer = (name, location, bufferGeom, size) => {
+  var buffers = bufferGeomBuffers.get(bufferGeom) || {};
+  bufferGeomBuffers.set(bufferGeom, buffers);
+
+  var buffer = buffers[name] || createFloat32Buffer(gl, bufferGeom[name]);
+  buffers[name] = buffer;
+
+  setFloat32Attribute(gl, location, buffer, size);
+};
+
+var bufferGeoms = new WeakMap();
+
+var getBufferGeom = geometry => {
+  var bufferGeom = bufferGeoms.get(geometry) || bufferGeom_fromGeom(geometry);
+  bufferGeoms.set(geometry, bufferGeom);
+  return bufferGeom;
+};
+
+var renderShadow = mesh => {
+  var { geometry } = mesh;
+
+  mat4_multiplyMatrices(
+    mesh.modelViewMatrix,
+    lightShadow.camera.matrixWorldInverse,
+    mesh.matrixWorld,
+  );
+
+  setMat4Uniform(gl, depthUniforms.modelViewMatrix, mesh.modelViewMatrix);
+  setMat4Uniform(
+    gl,
+    depthUniforms.projectionMatrix,
+    lightShadow.camera.projectionMatrix,
+  );
+
+  var bufferGeom = getBufferGeom(geometry);
+
+  setFloat32AttributeBuffer(
+    'position',
+    depthAttributes.position,
+    bufferGeom,
+    3,
+  );
+
+  gl.drawArrays(gl.TRIANGLES, 0, bufferGeom.position.length / 3);
+};
+
+var renderMesh = mesh => {
+  var { geometry, material } = mesh;
+
+  setVec3Uniform(gl, uniforms.fogColor, scene.fogColor);
+  setFloatUniform(gl, uniforms.fogNear, scene.fogNear);
+  setFloatUniform(gl, uniforms.fogFar, scene.fogFar);
+
+  setVec3Uniform(gl, uniforms.diffuse, material.color);
+  setVec3Uniform(gl, uniforms.specular, material.specular);
+  setFloatUniform(gl, uniforms.shininess, material.shininess);
+  setVec3Uniform(gl, uniforms.emissive, material.emissive);
+
+  mat4_multiplyMatrices(
+    mesh.modelViewMatrix,
+    camera.matrixWorldInverse,
+    mesh.matrixWorld,
+  );
+
+  gl.uniform1i(uniforms.receiveShadow, mesh.receiveShadow);
+  setMat4Uniform(gl, uniforms.modelMatrix, mesh.matrixWorld);
+  setMat4Uniform(gl, uniforms.modelViewMatrix, mesh.modelViewMatrix);
+  setMat4Uniform(gl, uniforms.projectionMatrix, camera.projectionMatrix);
+
+  var bufferGeom = getBufferGeom(geometry);
+
+  setFloat32AttributeBuffer('position', attributes.position, bufferGeom, 3);
+  setFloat32AttributeBuffer('color', attributes.color, bufferGeom, 3);
+
+  gl.drawArrays(gl.TRIANGLES, 0, bufferGeom.position.length / 3);
+};
+
+var vector3 = vec3_create();
+var direction = vec3_create();
 
 var render = () => {
   object3d_updateWorldMatrix(scene);
   mat4_invert(camera.matrixWorldInverse, camera.matrixWorld);
 
+  gl.useProgram(depthProgram);
   gl.bindFramebuffer(gl.FRAMEBUFFER, depthFramebuffer);
   gl.viewport(0, 0, depthTextureSize, depthTextureSize);
   gl.clearColor(1, 1, 1, 1);
   gl.frontFace(gl.CW);
-  gl.enable(gl.CULL_FACE);
-  gl.cullFace(gl.BACK);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   lightShadow_updateMatrices(lightShadow, directional);
   orthoCamera_updateProjectionMatrix(lightShadow.camera);
 
-  gl.useProgram(depthProgram);
   object3d_traverse(scene, object => {
-    if (object.visible && object.geometry && object.material) {
+    if (object.visible && object.geometry && object.castShadow) {
       renderShadow(object);
     }
   });
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  // return;
-
-  gl.viewport(0, 0, canvas.width, canvas.height);
 
   gl.useProgram(program);
+  gl.viewport(0, 0, canvas.width, canvas.height);
   gl.clearColor(0, 0, 0, 0);
   gl.frontFace(gl.CCW);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   // Ambient light.
-  setVec3Uniform(gl, uniforms.ambientLightColor, ambient);
-  gl.uniform1i(uniforms.directionalLightMap, 0);
+  setVec3Uniform(gl, uniforms.ambient, ambient);
 
   // Directional light.
   vec3_setFromMatrixPosition(direction, directional.matrixWorld);
@@ -278,12 +272,6 @@ var render = () => {
   setVec3Uniform(gl, uniforms[`directionalLight.direction`], direction);
   setVec3Uniform(gl, uniforms[`directionalLight.color`], color);
   setMat4Uniform(gl, uniforms.directionalShadowMatrix, lightShadow.matrix);
-  setVec2Uniform(
-    gl,
-    uniforms[`directionalLightShadow.shadowMapSize`],
-    vec3_create(512, 512),
-  );
-  setFloatUniform(gl, uniforms[`directionalLightShadow.shadowBias`], 0);
 
   // Objects.
   object3d_traverse(scene, object => {

@@ -37,7 +37,7 @@
       scene.add(ambientLight);
 
       const directionalLight = new THREE.DirectionalLight();
-      directionalLight.position.set(128, 256, -128);
+      directionalLight.position.set(64, 256, -64);
       directionalLight.castShadow = true;
       scene.add(directionalLight);
 
@@ -45,15 +45,17 @@
         new THREE.BoxGeometry(8, 8, 8),
         new THREE.MeshPhongMaterial()
       );
+      mesh.position.y = 4;
       mesh.castShadow = true;
       mesh.receiveShadow = true;
       scene.add(mesh);
 
      const mesh2 = new THREE.Mesh(
-        new THREE.BoxGeometry(8, 8, 8),
+        new THREE.BoxGeometry(8, 24, 8),
         new THREE.MeshPhongMaterial()
       );
       mesh2.position.x = 6;
+      mesh2.position.y = 12;
       mesh2.position.z = -8;
       mesh2.castShadow = true;
       mesh2.receiveShadow = true;
@@ -63,7 +65,7 @@
         new THREE.BoxGeometry(256, 8, 256),
         new THREE.MeshPhongMaterial()
       );
-      plane.position.y = -8;
+      plane.position.y = -4;
       plane.castShadow = true;
       plane.receiveShadow = true;
       scene.add(plane);

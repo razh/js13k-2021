@@ -75,7 +75,9 @@ vec3 BRDF_Specular_BlinnPhong(const in IncidentLight incidentLight, const in Geo
   return F * (G * D);
 }
 
-uniform vec3 ambientLightColor;
+uniform bool receiveShadow;
+uniform vec3 ambient;
+
 vec3 getAmbientLightIrradiance(const in vec3 ambientLightColor) {
   vec3 irradiance = ambientLightColor;
   irradiance *= PI;
@@ -117,21 +119,13 @@ void RE_IndirectDiffuse_BlinnPhong(const in vec3 irradiance, const in GeometricC
 uniform sampler2D directionalShadowMap;
 in vec4 vDirectionalShadowCoord;
 
-struct DirectionalLightShadow {
-  float shadowBias;
-  vec2 shadowMapSize;
-};
-
-uniform DirectionalLightShadow directionalLightShadow;
-
 float texture2DCompare(sampler2D depths, vec2 uv, float compare) {
   return step(compare, unpackRGBAToDepth(texture(depths, uv)));
 }
 
-float getShadow(sampler2D shadowMap, vec2 shadowMapSize, float shadowBias, vec4 shadowCoord) {
+float getShadow(sampler2D shadowMap, vec4 shadowCoord) {
   float shadow = 1.0;
   shadowCoord.xyz /= shadowCoord.w;
-  shadowCoord.z += shadowBias;
   bvec4 inFrustumVec = bvec4(shadowCoord.x >= 0.0, shadowCoord.x <= 1.0, shadowCoord.y >= 0.0, shadowCoord.y <= 1.0);
   bool inFrustum = all(inFrustumVec);
   bvec2 frustumTestVec = bvec2(inFrustum, shadowCoord.z <= 1.0);
@@ -168,12 +162,11 @@ void main() {
 
   getDirectionalDirectLightIrradiance(directionalLight, geometry, directLight);
 
-  // directLight.color *= receiveShadow ? getShadow(directionalShadowMap, directionalLightShadow.shadowMapSize, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[0]) : 1.0;
-  directLight.color *= getShadow(directionalShadowMap, directionalLightShadow.shadowMapSize, directionalLightShadow.shadowBias, vDirectionalShadowCoord);
+  directLight.color *= receiveShadow ? getShadow(directionalShadowMap, vDirectionalShadowCoord) : 1.0;
 
   RE_Direct_BlinnPhong(directLight, geometry, material, reflectedLight);
 
-  vec3 irradiance = getAmbientLightIrradiance(ambientLightColor);
+  vec3 irradiance = getAmbientLightIrradiance(ambient);
   RE_IndirectDiffuse_BlinnPhong(irradiance, geometry, material, reflectedLight);
 
   vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + emissive;

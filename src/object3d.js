@@ -1,4 +1,3 @@
-import { mat3_create } from './mat3.js';
 import {
   mat4_compose,
   mat4_copy,
@@ -36,8 +35,9 @@ export var object3d_create = () => ({
   matrix: mat4_create(),
   matrixWorld: mat4_create(),
   modelViewMatrix: mat4_create(),
-  normalMatrix: mat3_create(),
   visible: true,
+  castShadow: false,
+  receiveShadow: false,
 });
 
 export var object3d_lookAt = (object, vector) => {

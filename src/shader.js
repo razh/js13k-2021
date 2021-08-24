@@ -35,14 +35,8 @@ export var setFloat32Attribute = (gl, location, buffer, size) => {
 export var setFloatUniform = (gl, location, value) =>
   gl.uniform1f(location, value);
 
-export var setMat3Uniform = (gl, location, array) =>
-  gl.uniformMatrix3fv(location, false, array);
-
 export var setMat4Uniform = (gl, location, array) =>
   gl.uniformMatrix4fv(location, false, array);
-
-export var setVec2Uniform = (gl, location, vector) =>
-  gl.uniform2f(location, vector.x, vector.y);
 
 export var setVec3Uniform = (gl, location, vector) =>
   gl.uniform3f(location, vector.x, vector.y, vector.z);
