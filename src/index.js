@@ -3,10 +3,7 @@
 import { bufferGeom_fromGeom } from './bufferGeom.js';
 import { camera_create, camera_updateProjectionMatrix } from './camera.js';
 import { controls_create } from './controls.js';
-import {
-  lightShadow_create,
-  lightShadow_updateMatrices,
-} from './directionalLightShadow.js';
+import { lightShadow_updateMatrices } from './directionalLightShadow.js';
 import { entity_update } from './entity.js';
 import { map0 } from './maps.js';
 import { mat4_invert, mat4_multiplyMatrices } from './mat4.js';
@@ -59,12 +56,11 @@ var camera = camera_create(90);
 pointerLock_create(controls_create(camera), canvas);
 
 var { ambient, directional } = map0(gl, scene, camera);
-var lightShadow = lightShadow_create();
-lightShadow.camera.left = -128;
-lightShadow.camera.right = 128;
-lightShadow.camera.top = 128;
-lightShadow.camera.bottom = -128;
-orthoCamera_updateProjectionMatrix(lightShadow.camera);
+directional.shadow.camera.left = -128;
+directional.shadow.camera.right = 128;
+directional.shadow.camera.top = 128;
+directional.shadow.camera.bottom = -128;
+orthoCamera_updateProjectionMatrix(directional.shadow.camera);
 
 // Shader
 var program = createShaderProgram(gl, vert, frag);
@@ -168,7 +164,7 @@ var renderShadow = mesh => {
 
   mat4_multiplyMatrices(
     mesh.modelViewMatrix,
-    lightShadow.camera.matrixWorldInverse,
+    directional.shadow.camera.matrixWorldInverse,
     mesh.matrixWorld,
   );
 
@@ -176,7 +172,7 @@ var renderShadow = mesh => {
   setMat4Uniform(
     gl,
     depthUniforms.projectionMatrix,
-    lightShadow.camera.projectionMatrix,
+    directional.shadow.camera.projectionMatrix,
   );
 
   var bufferGeom = getBufferGeom(geometry);
@@ -236,8 +232,8 @@ var render = () => {
   gl.frontFace(gl.CW);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  lightShadow_updateMatrices(lightShadow, directional);
-  orthoCamera_updateProjectionMatrix(lightShadow.camera);
+  lightShadow_updateMatrices(directional.shadow, directional);
+  orthoCamera_updateProjectionMatrix(directional.shadow.camera);
 
   object3d_traverse(scene, object => {
     if (object.visible && object.geometry && object.castShadow) {
@@ -271,7 +267,11 @@ var render = () => {
 
   setVec3Uniform(gl, uniforms[`directionalLight.direction`], direction);
   setVec3Uniform(gl, uniforms[`directionalLight.color`], color);
-  setMat4Uniform(gl, uniforms.directionalShadowMatrix, lightShadow.matrix);
+  setMat4Uniform(
+    gl,
+    uniforms.directionalShadowMatrix,
+    directional.shadow.matrix,
+  );
 
   // Objects.
   object3d_traverse(scene, object => {
