@@ -9,10 +9,12 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
+  plugins: ['simple-import-sort'],
   rules: {
     'arrow-body-style': ['error', 'as-needed'],
     'func-style': 'error',
     'no-restricted-syntax': ['error', 'VariableDeclaration[kind!="var"]'],
     'object-shorthand': 'error',
+    'simple-import-sort/imports': 'error',
   },
 };
