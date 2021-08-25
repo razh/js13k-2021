@@ -230,8 +230,8 @@ var render = () => {
   gl.bindFramebuffer(gl.FRAMEBUFFER, depthFramebuffer);
   gl.viewport(0, 0, depthTextureSize, depthTextureSize);
   gl.clearColor(1, 1, 1, 1);
-  gl.frontFace(gl.CW);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.frontFace(gl.CW);
 
   lightShadow_updateMatrices(directional.shadow, directional);
   orthoCamera_updateProjectionMatrix(directional.shadow.camera);
@@ -247,8 +247,8 @@ var render = () => {
   gl.useProgram(program);
   gl.viewport(0, 0, canvas.width, canvas.height);
   gl.clearColor(0, 0, 0, 0);
-  gl.frontFace(gl.CCW);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.frontFace(gl.CCW);
 
   // Ambient light.
   setVec3Uniform(gl, uniforms.ambient, ambient);
