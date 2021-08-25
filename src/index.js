@@ -24,7 +24,6 @@ import {
 } from './shader.js';
 import frag from './shaders/phong_frag.glsl.js';
 import vert from './shaders/phong_vert.glsl.js';
-import { shadowMesh_update } from './shadowMesh.js';
 import {
   vec3_create,
   vec3_multiplyScalar,
@@ -161,15 +160,6 @@ var render = () => {
   object3d_traverse(scene, object => {
     if (object.visible && object.geometry && object.material) {
       renderMesh(object);
-
-      if (object.shadow) {
-        var { y } = object.shadow.position;
-        // Calculate shadow bias (only accounts for y-axis delta).
-        object.shadow.position.y += 0.001 * (camera.position.y - y);
-        shadowMesh_update(object.shadow, object.shadow.light.position);
-        renderMesh(object.shadow);
-        object.shadow.position.y = y;
-      }
     }
   });
 };
