@@ -65,7 +65,8 @@ vec3 BRDF_Specular_BlinnPhong(const in IncidentLight incidentLight, const in Geo
   return F * (G * D);
 }
 
-uniform vec3 ambientLightColor;
+uniform vec3 ambient;
+
 vec3 getAmbientLightIrradiance(const in vec3 ambientLightColor) {
   vec3 irradiance = ambientLightColor;
   irradiance *= PI;
@@ -131,7 +132,7 @@ void main() {
   getDirectionalDirectLightIrradiance(directionalLight, geometry, directLight);
   RE_Direct_BlinnPhong(directLight, geometry, material, reflectedLight);
 
-  vec3 irradiance = getAmbientLightIrradiance(ambientLightColor);
+  vec3 irradiance = getAmbientLightIrradiance(ambient);
   RE_IndirectDiffuse_BlinnPhong(irradiance, geometry, material, reflectedLight);
 
   vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + emissive;
