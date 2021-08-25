@@ -36,6 +36,8 @@ export var object3d_create = () => ({
   matrixWorld: mat4_create(),
   modelViewMatrix: mat4_create(),
   visible: true,
+  castShadow: false,
+  receiveShadow: false,
 });
 
 export var object3d_lookAt = (object, vector) => {
