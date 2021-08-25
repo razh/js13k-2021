@@ -1,5 +1,5 @@
-import { mat4_create, mat4_lookAt } from './mat4.js';
-import { object3d_create } from './object3d.js';
+import { mat4_create, mat4_invert, mat4_lookAt } from './mat4.js';
+import { object3d_create, object3d_updateWorldMatrix } from './object3d.js';
 import { quat_setFromRotationMatrix } from './quat.js';
 import { vec3_clone, vec3_Y } from './vec3.js';
 
@@ -52,4 +52,10 @@ export var camera_updateProjectionMatrix = camera => {
     a, b, c, -1,
     0, 0, d, 0,
   ]);
+};
+
+export var camera_updateWorldMatrix = camera => {
+  object3d_updateWorldMatrix(camera);
+  camera.matrixWorldInverse.set(camera.matrixWorld);
+  mat4_invert(camera.matrixWorldInverse);
 };
