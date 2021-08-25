@@ -57,5 +57,5 @@ export var camera_updateProjectionMatrix = camera => {
 export var camera_updateWorldMatrix = camera => {
   object3d_updateWorldMatrix(camera);
   camera.matrixWorldInverse.set(camera.matrixWorld);
-  mat4_invert(camera.matrixWorldInverse, camera.matrixWorldInverse);
+  mat4_invert(camera.matrixWorldInverse);
 };

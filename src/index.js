@@ -223,7 +223,8 @@ var direction = vec3_create();
 
 var render = () => {
   object3d_updateWorldMatrix(scene);
-  mat4_invert(camera.matrixWorldInverse, camera.matrixWorld);
+  camera.matrixWorldInverse.set(camera.matrixWorld);
+  mat4_invert(camera.matrixWorldInverse);
 
   gl.useProgram(depthProgram);
   gl.bindFramebuffer(gl.FRAMEBUFFER, depthFramebuffer);

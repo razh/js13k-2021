@@ -162,7 +162,8 @@ var _ray = ray_create();
 export var ray_intersectMesh = (ray, object) => {
   var intersections = [];
 
-  mat4_invert(_inverseMatrix, object.matrixWorld);
+  _inverseMatrix.set(object.matrixWorld);
+  mat4_invert(_inverseMatrix);
   ray_applyMatrix4(ray_copy(_ray, ray), _inverseMatrix);
 
   var { vertices, faces } = object.geometry;
