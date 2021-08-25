@@ -21,18 +21,6 @@ export var mat4_create = () =>
     0, 0, 0, 1,
   ]);
 
-export var mat4_identity = m => {
-  // prettier-ignore
-  m.set([
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    0, 0, 0, 1,
-  ]);
-
-  return m;
-};
-
 export var mat4_copy = (a, b) => {
   a.set(b);
   return a;
@@ -160,7 +148,7 @@ export var mat4_setPosition = (m, v) => {
   return m;
 };
 
-export var mat4_invert = (a, b) => {
+export var mat4_invert = m => {
   // based on http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm
   var [
     n11,
@@ -182,7 +170,7 @@ export var mat4_invert = (a, b) => {
     n24,
     n34,
     n44,
-  ] = b;
+  ] = m;
 
   var t11 =
     n23 * n34 * n42 -
@@ -215,13 +203,11 @@ export var mat4_invert = (a, b) => {
 
   var det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
 
-  if (det === 0) {
-    return mat4_identity(a);
-  }
+  if (det === 0) return m.fill(0);
 
   var detInv = 1 / det;
 
-  a.set([
+  m.set([
     t11 * detInv,
 
     (n24 * n33 * n41 -
@@ -327,7 +313,7 @@ export var mat4_invert = (a, b) => {
       detInv,
   ]);
 
-  return a;
+  return m;
 };
 
 export var mat4_scale = (m, v) => {
