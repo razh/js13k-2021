@@ -17,6 +17,12 @@ export var map0 = (gl, scene, camera) => {
   var ambient = vec3_create(0.5, 0.5, 0.5);
 
   var directional = light_create(vec3_create(1, 1, 1));
+  Object.assign(directional.shadow.camera, {
+    left: -128,
+    right: 128,
+    top: 128,
+    bottom: -128,
+  });
   vec3_set(directional.position, 64, 256, -64);
   object3d_add(map, directional);
 
@@ -46,10 +52,7 @@ export var map0 = (gl, scene, camera) => {
 
   entity_add(
     map,
-    component_create(() => {
-      // mesh2.position.x = Math.sin(Date.now() * 1e-3) * 16;
-      // mesh2.position.z = Math.cos(Date.now() * 1e-3) * 16;
-    }),
+    component_create(() => {}),
   );
 
   return {

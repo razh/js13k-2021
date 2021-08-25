@@ -15,64 +15,6 @@
   </head>
   <body>
     <script src="https://unpkg.com/three@0.131.3/build/three.js"></script>
-    <script>
-      const container = document.createElement("div");
-      document.body.append(container);
-
-      const renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setPixelRatio(window.devicePixelRatio);
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.BasicShadowMap;
-      container.append(renderer.domElement);
-
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(
-        90,
-        window.innerWidth / window.innerHeight
-      );
-      camera.position.set(16, 16, 32);
-
-      const ambientLight = new THREE.AmbientLight(new THREE.Color(0.5, 0.5, 0.5));
-      scene.add(ambientLight);
-
-      const directionalLight = new THREE.DirectionalLight();
-      directionalLight.position.set(64, 256, -64);
-      directionalLight.castShadow = true;
-      scene.add(directionalLight);
-
-      const mesh = new THREE.Mesh(
-        new THREE.BoxGeometry(8, 8, 8),
-        new THREE.MeshPhongMaterial()
-      );
-      mesh.position.y = 4;
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      scene.add(mesh);
-
-     const mesh2 = new THREE.Mesh(
-        new THREE.BoxGeometry(8, 24, 8),
-        new THREE.MeshPhongMaterial()
-      );
-      mesh2.position.x = 6;
-      mesh2.position.y = 12;
-      mesh2.position.z = -8;
-      mesh2.castShadow = true;
-      mesh2.receiveShadow = true;
-      scene.add(mesh2);
-
-      const plane = new THREE.Mesh(
-        new THREE.BoxGeometry(256, 8, 256),
-        new THREE.MeshPhongMaterial()
-      );
-      plane.position.y = -4;
-      plane.castShadow = true;
-      plane.receiveShadow = true;
-      scene.add(plane);
-
-      renderer.render(scene, camera);
-
-      container.addEventListener("click", () => renderer.render(scene, camera));
-    </script>
+    <script type="module" src="./shadowmap_example.js"></script>
   </body>
 </html>

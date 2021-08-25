@@ -56,10 +56,6 @@ var camera = camera_create(90);
 pointerLock_create(controls_create(camera), canvas);
 
 var { ambient, directional } = map0(gl, scene, camera);
-directional.shadow.camera.left = -128;
-directional.shadow.camera.right = 128;
-directional.shadow.camera.top = 128;
-directional.shadow.camera.bottom = -128;
 orthoCamera_updateProjectionMatrix(directional.shadow.camera);
 
 // Shader
