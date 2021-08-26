@@ -63,21 +63,34 @@ export var map0 = (gl, scene, camera) => {
   var player = player_create(playerMesh, playerPhysics);
   player.scene = map;
 
-  var mesh = mesh_create(boxGeom_create(8, 8, 8), material_create());
-  mesh.position.y = 4;
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-  object3d_add(scene, mesh);
+  var createStaticMeshFromGeometry = geometry => {
+    var mesh = physics_add(
+      mesh_create(geometry, material_create()),
+      BODY_STATIC,
+    );
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    object3d_add(map, mesh);
+    return mesh;
+  };
 
-  var mesh2 = mesh_create(boxGeom_create(8, 24, 8), material_create());
-  vec3_set(mesh2.position, 6, 12, -8);
-  mesh2.castShadow = true;
-  mesh2.receiveShadow = true;
-  object3d_add(scene, mesh2);
+  var mesh = createStaticMeshFromGeometry(
+    boxGeom_create(32, 32, 32),
+    material_create(),
+  );
+  vec3_set(mesh.position, 0, 16, -128);
 
-  var floorMesh = mesh_create(boxGeom_create(256, 8, 256), material_create());
+  var mesh2 = createStaticMeshFromGeometry(
+    boxGeom_create(8, 24, 128),
+    material_create(),
+  );
+  vec3_set(mesh2.position, 32, 12, -8);
+
+  var floorMesh = createStaticMeshFromGeometry(
+    boxGeom_create(512, 8, 512),
+    material_create(),
+  );
   floorMesh.position.y = -4;
-  floorMesh.receiveShadow = true;
   object3d_add(scene, floorMesh);
 
   entity_add(
