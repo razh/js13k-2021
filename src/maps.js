@@ -168,24 +168,34 @@ export var map0 = (gl, scene, camera) => {
         bullet.castShadow = true;
 
         // Bullets land in a box of size 1 that is 16 units away.
-        vec3_applyQuaternion(Object.assign(_v1, vec3_Z), camera.quaternion);
-        vec3_set(
-          _v0,
-          randFloatSpread(1),
-          randFloatSpread(1),
-          randFloatSpread(1),
+        object3d_lookAt(
+          bullet,
+          vec3_addScaledVector(
+            vec3_set(
+              _v0,
+              randFloatSpread(1),
+              randFloatSpread(1),
+              randFloatSpread(1),
+            ),
+            vec3_applyQuaternion(Object.assign(_v1, vec3_Z), camera.quaternion),
+            -16,
+          ),
         );
-        vec3_addScaledVector(_v0, _v1, -16);
-        object3d_lookAt(bullet, _v0);
 
         var bulletPhysics = get_physics_component(bullet);
-        Object.assign(bulletPhysics.velocity, playerPhysics.velocity);
-        vec3_applyQuaternion(Object.assign(_v0, vec3_Z), bullet.quaternion);
-        vec3_addScaledVector(bulletPhysics.velocity, _v0, 1200);
+        vec3_addScaledVector(
+          Object.assign(bulletPhysics.velocity, playerPhysics.velocity),
+          vec3_applyQuaternion(Object.assign(_v0, vec3_Z), bullet.quaternion),
+          1200,
+        );
 
-        vec3_set(bullet.position, playerWidth / 2, -playerHeight / 4, 0);
-        vec3_applyQuaternion(bullet.position, camera.quaternion);
-        vec3_add(bullet.position, playerMesh.position);
+        vec3_add(
+          vec3_applyQuaternion(
+            vec3_set(bullet.position, playerWidth / 2, -playerHeight / 4, 0),
+            camera.quaternion,
+          ),
+          playerMesh.position,
+        );
 
         object3d_add(map, bullet);
 
