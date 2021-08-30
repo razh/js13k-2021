@@ -2,15 +2,12 @@ export var interval_create = duration => {
   var previousTime = 0;
   var time = duration;
 
-  var update = dt => {
+  return (dt, condition = true) => {
     time += dt;
 
     if (time - previousTime > duration) {
-      return true;
+      if (condition) previousTime = time;
+      return condition;
     }
   };
-
-  update.reset = () => (previousTime = time);
-
-  return update;
 };
