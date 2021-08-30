@@ -1,4 +1,6 @@
 import { boxGeom_create } from './boxGeom.js';
+import { ny, py } from './boxIndices.js';
+import { align } from './boxTransforms.js';
 import { light_create } from './directionalLight.js';
 import { component_create, entity_add } from './entity.js';
 import { keys_create } from './keys.js';
@@ -14,6 +16,7 @@ import {
   physics_update,
 } from './physics.js';
 import { player_create, player_update } from './player.js';
+import { flow } from './utils.js';
 import {
   vec3_applyQuaternion,
   vec3_create,
@@ -74,24 +77,25 @@ export var map0 = (gl, scene, camera) => {
     return mesh;
   };
 
-  var mesh = createStaticMeshFromGeometry(
-    boxGeom_create(32, 32, 32),
-    material_create(),
-  );
-  vec3_set(mesh.position, 0, 16, -128);
+  var box = (dimensions, ...transforms) =>
+    flow(...transforms)(boxGeom_create(...dimensions));
 
-  var mesh2 = createStaticMeshFromGeometry(
-    boxGeom_create(8, 24, 128),
-    material_create(),
+  [
+    [
+      [32, 32, 32],
+      [0, 0, -128],
+    ],
+    [
+      [8, 24, 128],
+      [32, 0, -8],
+    ],
+    [[512, 8, 512], [0, 0, 0], align(py)],
+  ].map(([dimensions, position, transforms = align(ny)]) =>
+    vec3_set(
+      createStaticMeshFromGeometry(box(dimensions, transforms)).position,
+      ...position,
+    ),
   );
-  vec3_set(mesh2.position, 32, 12, -8);
-
-  var floorMesh = createStaticMeshFromGeometry(
-    boxGeom_create(512, 8, 512),
-    material_create(),
-  );
-  floorMesh.position.y = -4;
-  object3d_add(scene, floorMesh);
 
   entity_add(
     map,
