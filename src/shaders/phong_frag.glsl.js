@@ -48,7 +48,7 @@ in vec3 vFogPosition;
 uniform float fogNear;
 uniform float fogFar;
 
-vec3 BRDF_Diffuse_Lambert(const in vec3 diffuseColor) {
+vec3 BRDF_Lambert(const in vec3 diffuseColor) {
   return RECIPROCAL_PI * diffuseColor;
 }
 
@@ -65,7 +65,7 @@ float D_BlinnPhong(const in float shininess, const in float dotNH) {
   return RECIPROCAL_PI * (shininess * 0.5 + 1.0) * pow(dotNH, shininess);
 }
 
-vec3 BRDF_Specular_BlinnPhong(const in IncidentLight incidentLight, const in GeometricContext geometry, const in vec3 specularColor, const in float shininess) {
+vec3 BRDF_BlinnPhong(const in IncidentLight incidentLight, const in GeometricContext geometry, const in vec3 specularColor, const in float shininess) {
   vec3 halfDir = normalize(incidentLight.direction + geometry.viewDir);
   float dotNH = saturate(dot(geometry.normal, halfDir));
   float dotVH = saturate(dot(geometry.viewDir, halfDir));
@@ -91,9 +91,9 @@ struct DirectionalLight {
 
 uniform DirectionalLight directionalLight;
 
-void getDirectionalDirectLightIrradiance(const in DirectionalLight directionalLight, const in GeometricContext geometry, out IncidentLight directLight) {
-  directLight.color = directionalLight.color;
-  directLight.direction = directionalLight.direction;
+void getDirectionalLightInfo(const in DirectionalLight directionalLight, const in GeometricContext geometry, out IncidentLight light) {
+  light.color = directionalLight.color;
+  light.direction = directionalLight.direction;
 }
 
 in vec3 vViewPosition;
@@ -108,12 +108,12 @@ void RE_Direct_BlinnPhong(const in IncidentLight directLight, const in Geometric
   float dotNL = saturate(dot(geometry.normal, directLight.direction));
   vec3 irradiance = dotNL * directLight.color;
   irradiance *= PI;
-  reflectedLight.directDiffuse += irradiance * BRDF_Diffuse_Lambert(material.diffuseColor);
-  reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(directLight, geometry, material.specularColor, material.specularShininess);
+  reflectedLight.directDiffuse += irradiance * BRDF_Lambert(material.diffuseColor);
+  reflectedLight.directSpecular += irradiance * BRDF_BlinnPhong(directLight, geometry, material.specularColor, material.specularShininess);
 }
 
 void RE_IndirectDiffuse_BlinnPhong(const in vec3 irradiance, const in GeometricContext geometry, const in BlinnPhongMaterial material, inout ReflectedLight reflectedLight) {
-  reflectedLight.indirectDiffuse += irradiance * BRDF_Diffuse_Lambert(material.diffuseColor);
+  reflectedLight.indirectDiffuse += irradiance * BRDF_Lambert(material.diffuseColor);
 }
 
 uniform sampler2D directionalShadowMap;
@@ -160,7 +160,7 @@ void main() {
 
   IncidentLight directLight;
 
-  getDirectionalDirectLightIrradiance(directionalLight, geometry, directLight);
+  getDirectionalLightInfo(directionalLight, geometry, directLight);
 
   directLight.color *= receiveShadow ? getShadow(directionalShadowMap, vDirectionalShadowCoord) : 1.0;
 
