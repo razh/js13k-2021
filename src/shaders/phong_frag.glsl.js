@@ -43,6 +43,7 @@ float unpackRGBAToDepth(const in vec4 v) {
 
 in vec3 vColor;
 
+uniform bool fog;
 uniform vec3 fogColor;
 in vec3 vFogPosition;
 uniform float fogNear;
@@ -172,7 +173,7 @@ void main() {
   vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + emissive;
 
   float fogDepth = length(vFogPosition);
-  float fogFactor = smoothstep(fogNear, fogFar, fogDepth);
+  float fogFactor = fog ? smoothstep(fogNear, fogFar, fogDepth) : 0.0;
   color = vec4(mix(outgoingLight, fogColor, fogFactor), 1.0);
 }
 `.trim();

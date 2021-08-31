@@ -186,6 +186,7 @@ var renderShadow = mesh => {
 var renderMesh = mesh => {
   var { geometry, material } = mesh;
 
+  gl.uniform1i(uniforms.fog, material.fog);
   setVec3Uniform(gl, uniforms.fogColor, scene.fogColor);
   setFloatUniform(gl, uniforms.fogNear, scene.fogNear);
   setFloatUniform(gl, uniforms.fogFar, scene.fogFar);

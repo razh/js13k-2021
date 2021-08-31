@@ -7,4 +7,5 @@ export var material_create = () => ({
   specular: vec3_create(1 / 15, 1 / 15, 1 / 15),
   shininess: 30,
   emissive: vec3_create(),
+  fog: true,
 });
