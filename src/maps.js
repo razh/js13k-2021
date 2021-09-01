@@ -1,6 +1,6 @@
 import { boxGeom_create } from './boxGeom.js';
 import { ny, py } from './boxIndices.js';
-import { align } from './boxTransforms.js';
+import { $scale, align } from './boxTransforms.js';
 import { light_create } from './directionalLight.js';
 import { component_create, entity_add } from './entity.js';
 import { interval_create } from './interval.js';
@@ -8,6 +8,7 @@ import { keys_create } from './keys.js';
 import { material_create } from './material.js';
 import { randFloatSpread } from './math.js';
 import { mesh_create } from './mesh.js';
+import { box, platform_create } from './models.js';
 import {
   object3d_add,
   object3d_create,
@@ -24,7 +25,6 @@ import {
   physics_update,
 } from './physics.js';
 import { player_create, player_update } from './player.js';
-import { flow } from './utils.js';
 import {
   vec3_add,
   vec3_addScaledVector,
@@ -53,10 +53,10 @@ export var map0 = (gl, scene, camera) => {
 
   var directional = light_create(vec3_create(1, 1, 1));
   Object.assign(directional.shadow.camera, {
-    left: -256,
-    right: 256,
-    top: 256,
-    bottom: -256,
+    left: -512,
+    right: 512,
+    top: 512,
+    bottom: -512,
   });
   vec3_set(directional.position, 64, 256, -64);
   object3d_add(map, directional);
@@ -96,9 +96,6 @@ export var map0 = (gl, scene, camera) => {
     return mesh;
   };
 
-  var box = (dimensions, ...transforms) =>
-    flow(...transforms)(boxGeom_create(...dimensions));
-
   [
     [
       [32, 32, 32],
@@ -108,12 +105,28 @@ export var map0 = (gl, scene, camera) => {
       [8, 24, 128],
       [32, 0, -8],
     ],
-    [[512, 8, 512], [0, 0, 0], align(py)],
-  ].map(([dimensions, position, transforms = align(ny)]) =>
+    [
+      [256, 64, 256],
+      [-128, 128, -192],
+    ],
+    [
+      [256, 16, 256],
+      [-128, 128, -192],
+      [align(py), $scale([ny, { x: 7 / 8, z: 7 / 8 }])],
+    ],
+    [[512, 16, 512], [0, 0, 0], [align(py)]],
+    [[512, 16, 512], [0, 32, -672], [align(py)]],
+  ].map(([dimensions, position, transforms = [align(ny)]]) =>
     vec3_set(
-      createStaticMeshFromGeometry(box(dimensions, transforms)).position,
+      createStaticMeshFromGeometry(box(dimensions, ...transforms)).position,
       ...position,
     ),
+  );
+  vec3_set(
+    createStaticMeshFromGeometry(platform_create(96, 8, 128, 8)).position,
+    64,
+    64,
+    -128,
   );
 
   var bulletInterval = interval_create(0.1);

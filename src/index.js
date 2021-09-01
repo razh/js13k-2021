@@ -69,7 +69,7 @@ var depthAttributes = getAttributeLocations(gl, depthProgram);
 var depthUniforms = getUniformLocations(gl, depthProgram);
 
 var depthTexture = gl.createTexture();
-var depthTextureSize = 512;
+var depthTextureSize = 1024;
 gl.bindTexture(gl.TEXTURE_2D, depthTexture);
 gl.texImage2D(
   gl.TEXTURE_2D,
