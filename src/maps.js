@@ -26,21 +26,33 @@ import {
 } from './physics.js';
 import { player_create, player_update } from './player.js';
 import {
+  quat_create,
+  quat_rotateTowards,
+  quat_setFromAxisAngle,
+} from './quat.js';
+import {
   vec3_add,
   vec3_addScaledVector,
   vec3_applyQuaternion,
   vec3_create,
   vec3_cross,
+  vec3_dot,
+  vec3_length,
   vec3_multiplyScalar,
   vec3_normalize,
   vec3_set,
+  vec3_setLength,
   vec3_setScalar,
+  vec3_subVectors,
+  vec3_X,
+  vec3_Y,
   vec3_Z,
 } from './vec3.js';
 
 var keys = keys_create();
 var isMouseDown = false;
 
+var _q0 = quat_create();
 var _v0 = vec3_create();
 var _v1 = vec3_create();
 
@@ -129,6 +141,57 @@ export var map0 = (gl, scene, camera) => {
     -128,
   );
 
+  var enemyWidth = 0.8 * playerWidth;
+  var enemyHeight = 0.8 * playerHeight;
+  var enemyMaterial = material_create();
+  Object.assign(enemyMaterial.color, vec3_X);
+  var enemyMesh = entity_add(
+    physics_add(
+      mesh_create(
+        box([enemyWidth, enemyHeight, enemyWidth], align(ny)),
+        enemyMaterial,
+      ),
+      BODY_DYNAMIC,
+    ),
+    component_create((component, dt) => {
+      var enemyPhysics = get_physics_component(enemyMesh);
+      enemyPhysics.velocity.y -= 800 * dt;
+      var wishDirection = vec3_subVectors(
+        _v0,
+        playerMesh.position,
+        enemyMesh.position,
+      );
+      if (vec3_length(wishDirection) > 256) return;
+      vec3_normalize(wishDirection);
+      var accel = 10;
+      var stopSpeed = 100;
+      var friction = 6;
+      var y = enemyPhysics.velocity.y;
+      enemyPhysics.velocity.y = 0;
+      var speed = vec3_length(enemyPhysics.velocity);
+      var control = Math.max(speed, stopSpeed);
+      var newSpeed = Math.max(speed - control * friction * dt, 0);
+      vec3_setLength(enemyPhysics.velocity, newSpeed);
+      var currentSpeed = vec3_dot(enemyPhysics.velocity, wishDirection);
+      enemyPhysics.velocity.y = y;
+      var wishSpeed = 160;
+      var addSpeed = wishSpeed - currentSpeed;
+      if (addSpeed <= 0) return;
+      var accelSpeed = Math.min(accel * dt * wishSpeed, addSpeed);
+      vec3_addScaledVector(enemyPhysics.velocity, wishDirection, accelSpeed);
+      quat_setFromAxisAngle(
+        _q0,
+        vec3_Y,
+        Math.atan2(wishDirection.x, wishDirection.z),
+      );
+      quat_rotateTowards(enemyMesh.quaternion, _q0, 12 * dt);
+    }),
+  );
+  vec3_set(enemyMesh.position, 128, 32, -640);
+  enemyMesh.castShadow = true;
+  enemyMesh.receiveShadow = true;
+  object3d_add(map, enemyMesh);
+
   var bulletInterval = interval_create(0.1);
 
   entity_add(
@@ -199,7 +262,7 @@ export var map0 = (gl, scene, camera) => {
         vec3_addScaledVector(
           Object.assign(bulletPhysics.velocity, playerPhysics.velocity),
           vec3_applyQuaternion(Object.assign(_v0, vec3_Z), bullet.quaternion),
-          1200,
+          800,
         );
 
         vec3_add(
