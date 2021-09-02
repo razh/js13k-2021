@@ -153,7 +153,7 @@ export var map0 = (gl, scene, camera) => {
       ),
       BODY_DYNAMIC,
     ),
-    component_create((component, dt) => {
+    component_create(dt => {
       var enemyPhysics = get_physics_component(enemyMesh);
       enemyPhysics.velocity.y -= 800 * dt;
       var wishDirection = vec3_subVectors(
@@ -196,7 +196,7 @@ export var map0 = (gl, scene, camera) => {
 
   entity_add(
     map,
-    component_create((component, dt) => {
+    component_create(dt => {
       var bodies = physics_bodies(map);
       physics_update(bodies);
       player.dt = dt;
@@ -234,7 +234,7 @@ export var map0 = (gl, scene, camera) => {
         var time = 0;
         var bullet = entity_add(
           physics_add(mesh_create(bulletGeometry, bulletMaterial), BODY_BULLET),
-          component_create((component, dt) => {
+          component_create(dt => {
             time += dt;
             if (time > 4) {
               object3d_remove(map, bullet);
