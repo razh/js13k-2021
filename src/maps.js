@@ -134,11 +134,21 @@ export var map0 = (gl, scene, camera) => {
       ...position,
     ),
   );
-  vec3_set(
-    createStaticMeshFromGeometry(platform_create(96, 8, 128, 8)).position,
-    64,
-    64,
-    -128,
+
+  [
+    [
+      [96, 8, 128, 8],
+      [64, 64, -128],
+    ],
+    [
+      [128, 8, 256, 8],
+      [256, 48, -240],
+    ],
+  ].map(([dimensions, position]) =>
+    vec3_set(
+      createStaticMeshFromGeometry(platform_create(...dimensions)).position,
+      ...position,
+    ),
   );
 
   var enemyWidth = 0.8 * playerWidth;
