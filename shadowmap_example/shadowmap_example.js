@@ -11,6 +11,7 @@ renderer.shadowMap.type = THREE.BasicShadowMap;
 container.append(renderer.domElement);
 
 var scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0);
 var camera = new THREE.PerspectiveCamera(
   90,
   window.innerWidth / window.innerHeight,
