@@ -11,10 +11,8 @@ in vec3 position;
 out vec2 vHighPrecisionZW;
 
 void main() {
-  gl_Position =
-    projectionMatrix *
-    // mvPosition
-    modelViewMatrix * vec4(position, 1);
+  vec4 mvPosition = modelViewMatrix * vec4(position, 1);
+  gl_Position = projectionMatrix * mvPosition;
   vHighPrecisionZW = gl_Position.zw;
 }
 `.trim();

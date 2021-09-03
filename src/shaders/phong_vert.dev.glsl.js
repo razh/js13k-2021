@@ -26,10 +26,8 @@ void main() {
   gl_Position = projectionMatrix * mvPosition;
   vViewPosition = -mvPosition.xyz;
 
-  vDirectionalShadowCoord =
-    directionalShadowMatrix *
-    // worldPosition
-    modelMatrix * vec4(position, 1);
+  vec4 worldPosition = modelMatrix * vec4(position, 1);
+  vDirectionalShadowCoord = directionalShadowMatrix * worldPosition;
 
   vFogPosition = mvPosition.xyz;
 }
