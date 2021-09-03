@@ -4,18 +4,15 @@ var container = document.createElement('div');
 document.body.append(container);
 
 var renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(devicePixelRatio);
+renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.BasicShadowMap;
 container.append(renderer.domElement);
 
 var scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0);
-var camera = new THREE.PerspectiveCamera(
-  90,
-  window.innerWidth / window.innerHeight,
-);
+var camera = new THREE.PerspectiveCamera(90, innerWidth / innerHeight);
 camera.position.set(16, 16, 32);
 
 var ambientLight = new THREE.AmbientLight(new THREE.Color(0.5, 0.5, 0.5));
@@ -60,6 +57,16 @@ plane.castShadow = true;
 plane.receiveShadow = true;
 scene.add(plane);
 
-renderer.render(scene, camera);
+var render = () => renderer.render(scene, camera);
 
-container.addEventListener('click', () => renderer.render(scene, camera));
+render();
+
+container.addEventListener('click', render);
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(innerWidth, innerHeight);
+  render();
+});
