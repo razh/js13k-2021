@@ -124,19 +124,66 @@ function glsl() {
   };
 }
 
+function glslMangle() {
+  return {
+    transform(code, id) {
+      if (!id.endsWith('.glsl.js')) {
+        return;
+      }
+
+      // From terser output for dist/min/bundle.js.
+      // Replace in-order, ignoring frequency.
+      const chars = 'e,i,r,a,o,t,n,s,c,v,m,l,x,d,y,h'.split(',');
+
+      const mangleableTokens = (() => {
+        switch (true) {
+          case id.endsWith('depth_frag.glsl.js'):
+            return ['packDepthToRGBA'];
+          case id.endsWith('phong_frag.glsl.js'):
+            return [
+              'saturate',
+              'diffuseColor',
+              'normal',
+              'viewDir',
+              'shadowCoord',
+              'irradiance',
+              'halfDir',
+              'dotVH',
+              'fresnel',
+            ];
+          case id.endsWith('phong_vert.glsl.js'):
+            return ['mvPosition'];
+          default:
+            return [];
+        }
+      })();
+
+      mangleableTokens.map(
+        (token, index) =>
+          (code = code.replace(
+            new RegExp(`\\b${token}\\b`, 'g'),
+            chars[index],
+          )),
+      );
+
+      return code;
+    },
+  };
+}
+
 export function bundle() {
   return rollup({
     input: 'src/index.js',
     plugins: [
       glConstants(),
       glsl(),
+      glslMangle(),
       {
         transform(code) {
-          let transformedCode = code;
           [].map(
-            ([a, b]) => (transformedCode = transformedCode.replaceAll(a, b)),
+            ([a, b]) => (code = code.replace(new RegExp(`\\b${a}\\b`, 'g'), b)),
           );
-          return transformedCode;
+          return code;
         },
       },
     ],
