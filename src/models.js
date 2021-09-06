@@ -17,7 +17,8 @@ import {
   $translateZ,
   relativeAlign,
 } from './boxTransforms.js';
-import { geom_create, merge } from './geom.js';
+import { geom_create, merge, translate } from './geom.js';
+import { randFloat } from './math.js';
 import { flow } from './utils.js';
 
 export var box = (dimensions, ...transforms) =>
@@ -114,4 +115,29 @@ export var platform_create = (width, height, depth, strokeWidth) => {
       strokeColor,
     ),
   );
+};
+
+export var starfield_create = (innerRadius, outerRadius, count) => {
+  var stars = [];
+  var size = 16;
+
+  for (var i = 0; i < count; i++) {
+    var theta = 2 * Math.PI * Math.random();
+    var u = 2 * Math.random() - 1;
+    var v = Math.sqrt(1 - u * u);
+    var radius = randFloat(innerRadius, outerRadius);
+
+    stars.push(
+      box(
+        [size, size, size],
+        translate(
+          radius * v * Math.cos(theta),
+          radius * v * Math.sin(theta),
+          radius * u,
+        ),
+      ),
+    );
+  }
+
+  return mergeAll(...stars);
 };

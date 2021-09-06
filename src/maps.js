@@ -8,7 +8,7 @@ import { keys_create } from './keys.js';
 import { material_create } from './material.js';
 import { randFloatSpread } from './math.js';
 import { mesh_create } from './mesh.js';
-import { box, platform_create } from './models.js';
+import { box, platform_create, starfield_create } from './models.js';
 import {
   object3d_add,
   object3d_create,
@@ -74,6 +74,7 @@ export var map0 = (gl, scene, camera) => {
   object3d_add(map, directional);
 
   // Camera
+  camera.far = 12288;
   var cameraObject = object3d_create();
   object3d_add(cameraObject, camera);
   object3d_add(map, cameraObject);
@@ -148,6 +149,19 @@ export var map0 = (gl, scene, camera) => {
     vec3_set(
       createStaticMeshFromGeometry(platform_create(...dimensions)).position,
       ...position,
+    ),
+  );
+
+  var starfieldMaterial = material_create();
+  vec3_setScalar(starfieldMaterial.emissive, 1);
+  starfieldMaterial.fog = false;
+  var starfieldOuterRadius = 8192;
+  var starfieldInnerRadius = starfieldOuterRadius - 256;
+  object3d_add(
+    map,
+    mesh_create(
+      starfield_create(starfieldInnerRadius, starfieldOuterRadius, 256),
+      starfieldMaterial,
     ),
   );
 
