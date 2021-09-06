@@ -1,3 +1,5 @@
+import { boxGeom_create } from './boxGeom.js';
+import { nx, px } from './boxIndices.js';
 import { geom_translate } from './geom.js';
 import { rearg } from './utils.js';
 import {
@@ -103,3 +105,30 @@ export var $set = rearg(callBoxVertices(vec3_fromArray));
 export var $setX = rearg(callBoxVertices(vec3_setX));
 export var $setY = rearg(callBoxVertices(vec3_setY));
 export var $setZ = rearg(callBoxVertices(vec3_setZ));
+
+export var extrude = (() => {
+  var identity = vec3_create();
+
+  return (geom, indicesA, indicesB, delta) => {
+    setVector(_vector, delta, identity);
+
+    var extrudedGeom = boxGeom_create();
+    indicesA.map((indexA, index) => {
+      var indexB = indicesB[index];
+      Object.assign(
+        extrudedGeom.vertices[
+          indicesB === px || indicesB === nx
+            ? // Transform px [0, 1, 2, 3] to nx [5, 4, 7, 6] and nx to px.
+              indexB ^ 1
+            : indexB
+        ],
+        geom.vertices[indexA],
+      );
+      vec3_add(
+        Object.assign(extrudedGeom.vertices[indexA], geom.vertices[indexA]),
+        _vector,
+      );
+    });
+    return extrudedGeom;
+  };
+})();
