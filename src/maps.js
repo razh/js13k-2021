@@ -3,6 +3,7 @@ import { ny, py } from './boxIndices.js';
 import { $scale, align } from './boxTransforms.js';
 import { light_create } from './directionalLight.js';
 import { component_create, entity_add } from './entity.js';
+import { fbm3d } from './fbm3d.js';
 import { interval_create } from './interval.js';
 import { keys_create } from './keys.js';
 import { material_create } from './material.js';
@@ -25,6 +26,7 @@ import {
   physics_update,
 } from './physics.js';
 import { player_create, player_update } from './player.js';
+import { icosahedronGeom_create } from './polyhedronGeom.js';
 import {
   quat_create,
   quat_rotateTowards,
@@ -38,6 +40,7 @@ import {
   vec3_cross,
   vec3_dot,
   vec3_length,
+  vec3_lerp,
   vec3_multiplyScalar,
   vec3_normalize,
   vec3_set,
@@ -164,6 +167,25 @@ export var map0 = (gl, scene, camera) => {
       starfieldMaterial,
     ),
   );
+
+  var icosaMaterial = material_create();
+  icosaMaterial.fog = false;
+  var icosa = mesh_create(icosahedronGeom_create(2048, 4), icosaMaterial);
+  var fbm = fbm3d({ period: 1024 });
+  icosa.geometry.faces.map(face => {
+    [face.a, face.b] = [face.b, face.a];
+    face.vertexColors = [face.a, face.b, face.c].map(index => {
+      var { x, y, z } = icosa.geometry.vertices[index];
+      return vec3_lerp(
+        vec3_create(),
+        vec3_create(0.1, 0.1, 0.2),
+        0.5 * fbm(x, y, z) + 1,
+      );
+    });
+  });
+  vec3_set(icosa.position, 64, 64, -128);
+  console.log(icosa.geometry);
+  object3d_add(map, icosa);
 
   var enemyWidth = 0.8 * playerWidth;
   var enemyHeight = 0.8 * playerHeight;
