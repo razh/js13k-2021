@@ -8,4 +8,6 @@ export var material_create = () => ({
   shininess: 30,
   emissive: vec3_create(),
   fog: true,
+  onBeforeRender() {},
+  onAfterRender() {},
 });

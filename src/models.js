@@ -198,6 +198,24 @@ export var scanner_create = () => {
   );
 };
 
+// http://www.vendian.org/mncharity/dir3/starcolor/
+var starColors = [
+  // '#9bb0ff'
+  [0.6, 0.69, 1],
+  // '#aabfff'
+  [0.66, 0.75, 1],
+  // '#cad8ff'
+  [0.79, 0.85, 1],
+  // '#fbf8ff',
+  [0.98, 0.97, 1],
+  // '#fff4e8',
+  [1, 0.96, 0.91],
+  // '#ffddb4'
+  [1, 0.87, 0.71],
+  // '#ffbd6f'
+  [1, 0.84, 0.44],
+];
+
 export var starfield_create = (innerRadius, outerRadius, count) => {
   var stars = [];
   var size = 32;
@@ -216,6 +234,7 @@ export var starfield_create = (innerRadius, outerRadius, count) => {
           radius * v * Math.sin(theta),
           radius * u,
         ),
+        colors([all, starColors[i % starColors.length]]),
       ),
     );
   }

@@ -212,7 +212,9 @@ var renderMesh = mesh => {
   setFloat32AttributeBuffer('position', attributes.position, bufferGeom, 3);
   setFloat32AttributeBuffer('color', attributes.color, bufferGeom, 3);
 
+  material.onBeforeRender(gl, uniforms);
   gl.drawArrays(gl.TRIANGLES, 0, bufferGeom.position.length / 3);
+  material.onAfterRender(gl, uniforms);
 };
 
 var vector3 = vec3_create();

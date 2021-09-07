@@ -41,6 +41,7 @@ import {
   quat_setFromAxisAngle,
 } from './quat.js';
 import { ray_create, ray_intersectObjects } from './ray.js';
+import { setVec3Uniform } from './shader.js';
 import {
   vec3_add,
   vec3_addScaledVector,
@@ -175,8 +176,11 @@ export var map0 = (gl, scene, camera) => {
   );
 
   var starfieldMaterial = material_create();
-  vec3_setScalar(starfieldMaterial.emissive, 1);
   starfieldMaterial.fog = false;
+  starfieldMaterial.onBeforeRender = (gl, uniforms) =>
+    setVec3Uniform(gl, uniforms.ambient, vec3_create(1, 1, 1));
+  starfieldMaterial.onAfterRender = (gl, uniforms) =>
+    setVec3Uniform(gl, uniforms.ambient, ambient);
   var starfieldOuterRadius = 15360;
   var starfieldInnerRadius = starfieldOuterRadius - 256;
   object3d_add(
