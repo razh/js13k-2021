@@ -188,13 +188,18 @@ export var platform_create = (width, height, depth, strokeWidth) => {
 
 export var scanner_create = () => {
   var size = 16;
-  var length = 24;
-  var headLength = 4;
+  var length = 32;
+  var headLength = 6;
 
   var head = box([size, size, headLength], $scale([pz, { x: 0.5, y: 0.5 }]));
   return mergeAll(
     head,
-    box([size, size, length - headLength], relativeAlign(pz, head, nz)),
+    // Tail
+    box(
+      [size, size, length - headLength],
+      relativeAlign(pz, head, nz),
+      $scale([nz, { x: 0, y: 0 }]),
+    ),
   );
 };
 
