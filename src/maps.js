@@ -74,7 +74,7 @@ export var map0 = (gl, scene, camera) => {
   object3d_add(map, directional);
 
   // Camera
-  camera.far = 12288;
+  camera.far = 16384;
   var cameraObject = object3d_create();
   object3d_add(cameraObject, camera);
   object3d_add(map, cameraObject);
@@ -155,10 +155,10 @@ export var map0 = (gl, scene, camera) => {
   var starfieldMaterial = material_create();
   vec3_setScalar(starfieldMaterial.emissive, 1);
   starfieldMaterial.fog = false;
-  var starfieldOuterRadius = 8192;
+  var starfieldOuterRadius = 15360;
   var starfieldInnerRadius = starfieldOuterRadius - 256;
   object3d_add(
-    map,
+    cameraObject,
     mesh_create(
       starfield_create(starfieldInnerRadius, starfieldOuterRadius, 256),
       starfieldMaterial,
