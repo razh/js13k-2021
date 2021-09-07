@@ -1,6 +1,7 @@
 import { boxGeom_create } from './boxGeom.js';
 import { ny, py } from './boxIndices.js';
 import { $scale, align } from './boxTransforms.js';
+import { DEBUG } from './constants.js';
 import { light_create } from './directionalLight.js';
 import { component_create, entity_add } from './entity.js';
 import { interval_create } from './interval.js';
@@ -30,6 +31,7 @@ import {
   quat_rotateTowards,
   quat_setFromAxisAngle,
 } from './quat.js';
+import { ray_create, ray_intersectObjects } from './ray.js';
 import {
   vec3_add,
   vec3_addScaledVector,
@@ -309,6 +311,37 @@ export var map0 = (gl, scene, camera) => {
 
   addEventListener('mousedown', () => (isMouseDown = true));
   addEventListener('mouseup', () => (isMouseDown = false));
+
+  if (DEBUG) {
+    addEventListener('click', () => {
+      var ray = ray_create();
+      Object.assign(ray.origin, cameraObject.position);
+      vec3_applyQuaternion(
+        vec3_set(ray.direction, 0, 0, -1),
+        camera.quaternion,
+      );
+      var staticMeshes = physics_bodies(scene)
+        .filter(body => body.physics === BODY_STATIC)
+        .map(body => body.parent);
+      var intersection = ray_intersectObjects(ray, staticMeshes)?.[0];
+      if (intersection) {
+        console.log(
+          [
+            intersection.point.x,
+            intersection.point.y,
+            intersection.point.z,
+          ].map(Math.round),
+          { distance: Math.round(intersection.distance) },
+        );
+        var targetMaterial = material_create();
+        vec3_set(targetMaterial.emissive, 0, 1, 0);
+        var target = mesh_create(box([2, 2, 2]), targetMaterial);
+        Object.assign(target.position, intersection.point);
+        object3d_add(map, target);
+        setTimeout(() => object3d_remove(map, target), 1000);
+      }
+    });
+  }
 
   return {
     ambient,
