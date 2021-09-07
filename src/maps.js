@@ -1,6 +1,8 @@
+import { findTarget, inFront } from './ai.js';
 import { boxGeom_create } from './boxGeom.js';
 import { ny, py } from './boxIndices.js';
 import { $scale, align } from './boxTransforms.js';
+import { DEBUG } from './constants.js';
 import { light_create } from './directionalLight.js';
 import { component_create, entity_add } from './entity.js';
 import { interval_create } from './interval.js';
@@ -8,7 +10,15 @@ import { keys_create } from './keys.js';
 import { material_create } from './material.js';
 import { randFloatSpread } from './math.js';
 import { mesh_create } from './mesh.js';
-import { box, platform_create, starfield_create } from './models.js';
+import {
+  box,
+  bridge_create,
+  corridor_create,
+  dreadnought_create,
+  platform_create,
+  scanner_create,
+  starfield_create,
+} from './models.js';
 import {
   object3d_add,
   object3d_create,
@@ -30,6 +40,7 @@ import {
   quat_rotateTowards,
   quat_setFromAxisAngle,
 } from './quat.js';
+import { ray_create, ray_intersectObjects } from './ray.js';
 import {
   vec3_add,
   vec3_addScaledVector,
@@ -152,6 +163,17 @@ export var map0 = (gl, scene, camera) => {
     ),
   );
 
+  createStaticMeshFromGeometry(
+    bridge_create(vec3_create(0, 52, -240), vec3_create(192, 52, -240), 64, 8),
+  );
+
+  vec3_set(
+    createStaticMeshFromGeometry(corridor_create()).position,
+    -32,
+    0,
+    -384,
+  );
+
   var starfieldMaterial = material_create();
   vec3_setScalar(starfieldMaterial.emissive, 1);
   starfieldMaterial.fog = false;
@@ -164,6 +186,16 @@ export var map0 = (gl, scene, camera) => {
       starfieldMaterial,
     ),
   );
+
+  var dreadnoughtMaterial = material_create();
+  dreadnoughtMaterial.fog = false;
+  var dreadnoughtMesh = mesh_create(dreadnought_create(), dreadnoughtMaterial);
+  vec3_set(dreadnoughtMesh.position, 0, 1024, -5120);
+  object3d_add(map, dreadnoughtMesh);
+
+  var scannerMesh = mesh_create(scanner_create(), material_create());
+  vec3_set(scannerMesh.position, 0, 52, -128);
+  object3d_add(map, scannerMesh);
 
   var enemyWidth = 0.8 * playerWidth;
   var enemyHeight = 0.8 * playerHeight;
@@ -180,12 +212,13 @@ export var map0 = (gl, scene, camera) => {
     component_create(dt => {
       var enemyPhysics = get_physics_component(enemyMesh);
       enemyPhysics.velocity.y -= 800 * dt;
+      var isInFront = inFront(enemyMesh, playerMesh);
       var wishDirection = vec3_subVectors(
         _v0,
-        playerMesh.position,
+        isInFront ? playerMesh.position : enemyMesh.position,
         enemyMesh.position,
       );
-      if (vec3_length(wishDirection) > 256) return;
+      if (!findTarget(enemyMesh, playerMesh)) return;
       vec3_normalize(wishDirection);
       var accel = 10;
       var stopSpeed = 100;
@@ -208,7 +241,7 @@ export var map0 = (gl, scene, camera) => {
         vec3_Y,
         Math.atan2(wishDirection.x, wishDirection.z),
       );
-      quat_rotateTowards(enemyMesh.quaternion, _q0, 12 * dt);
+      quat_rotateTowards(enemyMesh.quaternion, _q0, 2 * dt);
     }),
   );
   vec3_set(enemyMesh.position, 128, 32, -640);
@@ -309,6 +342,37 @@ export var map0 = (gl, scene, camera) => {
 
   addEventListener('mousedown', () => (isMouseDown = true));
   addEventListener('mouseup', () => (isMouseDown = false));
+
+  if (DEBUG) {
+    addEventListener('click', () => {
+      var ray = ray_create();
+      Object.assign(ray.origin, cameraObject.position);
+      vec3_applyQuaternion(
+        vec3_set(ray.direction, 0, 0, -1),
+        camera.quaternion,
+      );
+      var staticMeshes = physics_bodies(scene)
+        .filter(body => body.physics === BODY_STATIC)
+        .map(body => body.parent);
+      var intersection = ray_intersectObjects(ray, staticMeshes)?.[0];
+      if (intersection) {
+        console.log(
+          [
+            intersection.point.x,
+            intersection.point.y,
+            intersection.point.z,
+          ].map(Math.round),
+          { distance: Math.round(intersection.distance) },
+        );
+        var targetMaterial = material_create();
+        vec3_set(targetMaterial.emissive, 0, 1, 0);
+        var target = mesh_create(box([2, 2, 2]), targetMaterial);
+        Object.assign(target.position, intersection.point);
+        object3d_add(map, target);
+        setTimeout(() => object3d_remove(map, target), 1000);
+      }
+    });
+  }
 
   return {
     ambient,
