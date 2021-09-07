@@ -5,7 +5,7 @@ import {
   box3_overlapsBox,
   box3_translate,
 } from './box3.js';
-import { physics_bodies, sweptAABB } from './physics.js';
+import { BODY_BULLET, physics_bodies, sweptAABB } from './physics.js';
 import {
   OVERCLIP,
   pm_clipVelocity,
@@ -117,7 +117,7 @@ var player_trace = (() => {
     trace_reset(trace);
 
     var bodies = physics_bodies(player.scene).filter(
-      body => body !== player.body,
+      body => body !== player.body && body.physics !== BODY_BULLET,
     );
 
     Object.assign(originalVelocity, player.body.velocity);
