@@ -1,5 +1,5 @@
 import { boxGeom_create } from './boxGeom.js';
-import { nx, px } from './boxIndices.js';
+import { nx, ny, nz, px, py, pz } from './boxIndices.js';
 import { geom_translate } from './geom.js';
 import { rearg } from './utils.js';
 import {
@@ -108,9 +108,18 @@ export var $setZ = rearg(callBoxVertices(vec3_setZ));
 
 export var extrude = (() => {
   var identity = vec3_create();
+  var oppositeIndices = new Map([
+    [px, nx],
+    [py, ny],
+    [pz, nz],
+    [nx, px],
+    [ny, py],
+    [nz, pz],
+  ]);
 
-  return (geom, indicesA, indicesB, delta) => {
+  return (geom, indicesA, delta) => {
     setVector(_vector, delta, identity);
+    var indicesB = oppositeIndices.get(indicesA);
 
     var extrudedGeom = boxGeom_create();
     indicesA.map((indexA, index) => {
