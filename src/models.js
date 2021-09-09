@@ -241,7 +241,7 @@ export var platform_create = (width, height, depth, strokeWidth) => {
   );
 
   var strokeDimensions = [strokeWidth, height, strokeWidth];
-  var strokeColor = colors([all, 0.5]);
+  var strokeColor = colors([all, [0.4, 0.4, 0.5]]);
   var halfStrokeWidth = strokeWidth / 2;
 
   return mergeAll(
@@ -317,13 +317,13 @@ export var platform_create = (width, height, depth, strokeWidth) => {
 
 export var starfield_create = (innerRadius, outerRadius, count) => {
   var stars = [];
-  var size = 16;
 
   for (var i = 0; i < count; i++) {
     var theta = 2 * Math.PI * Math.random();
     var u = 2 * Math.random() - 1;
     var v = Math.sqrt(1 - u * u);
     var radius = randFloat(innerRadius, outerRadius);
+    var size = randFloat(12, 24);
 
     stars.push(
       box(

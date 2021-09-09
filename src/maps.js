@@ -71,7 +71,7 @@ export var map0 = (gl, scene, camera) => {
   object3d_add(scene, map);
 
   // Lights
-  var ambient = vec3_create(0.5, 0.5, 0.5);
+  var ambient = vec3_create(0.2, 0.2, 0.3);
 
   var directional = light_create(vec3_create(1, 1, 1));
   Object.assign(directional.shadow.camera, {
@@ -111,7 +111,7 @@ export var map0 = (gl, scene, camera) => {
 
   var createStaticMeshFromGeometry = geometry => {
     var material = material_create();
-    vec3_set(material.color, 0.5, 0.5, 0.5);
+    vec3_set(material.color, 0.7, 0.7, 0.75);
     var mesh = physics_add(mesh_create(geometry, material), BODY_STATIC);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
@@ -311,7 +311,7 @@ export var map0 = (gl, scene, camera) => {
 
         vec3_add(
           vec3_applyQuaternion(
-            vec3_set(bullet.position, playerWidth / 2, -playerHeight / 4, 0),
+            vec3_set(bullet.position, playerWidth / 2, -playerHeight / 8, 0),
             camera.quaternion,
           ),
           playerMesh.position,
