@@ -113,4 +113,46 @@ var adsr = (attack, decay, sustain, release, sustainVolume) => {
   };
 };
 
+// Reverb
+var wet = audioContext.createGain();
+wet.gain.value = 0.3;
+wet.connect(audioContext.destination);
+
+var dry = audioContext.createGain();
+dry.gain.value = 1 - wet.gain.value;
+dry.connect(audioContext.destination);
+
+var convolver = audioContext.createConvolver();
+convolver.connect(wet);
+
+var destination = audioContext.createGain();
+destination.connect(dry);
+destination.connect(convolver);
+
+// https://github.com/Tonejs/Tone.js/blob/dev/Tone/effect/Reverb.ts
+(async () => {
+  var decay = 1.5;
+  var preDelay = 0.01;
+  var duration = decay + preDelay;
+
+  var offlineContext = new OfflineAudioContext(
+    1,
+    duration * sampleRate,
+    sampleRate,
+  );
+
+  var gainNode = offlineContext.createGain();
+  gainNode.gain.setValueAtTime(0, 0);
+  gainNode.gain.setValueAtTime(1, preDelay);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, duration);
+  gainNode.connect(offlineContext.destination);
+
+  var offlineBufferSource = offlineContext.createBufferSource();
+  offlineBufferSource.buffer = generateAudioBuffer(noise(), duration, 1);
+  offlineBufferSource.connect(gainNode);
+  offlineBufferSource.start();
+
+  convolver.buffer = await offlineContext.startRendering();
+})();
+
 addEventListener('click', () => audioContext.resume(), { once: true });
