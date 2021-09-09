@@ -9,7 +9,7 @@ export var nx_py_pz = [5];
 export var nx_ny_nz = [6];
 export var nx_ny_pz = [7];
 
-// Edges.
+// Edge vertices.
 export var px_py = [0, 1];
 export var px_ny = [2, 3];
 export var nx_py = [4, 5];
@@ -25,7 +25,7 @@ export var py_nz = [1, 4];
 export var ny_pz = [2, 7];
 export var ny_nz = [3, 6];
 
-// Faces.
+// Face vertices.
 export var px = [0, 1, 2, 3];
 export var nx = [4, 5, 6, 7];
 export var py = [0, 1, 4, 5];
@@ -35,3 +35,11 @@ export var nz = [1, 3, 4, 6];
 
 // All vertices.
 export var all = [0, 1, 2, 3, 4, 5, 6, 7];
+
+// Faces.
+export var face_px = [0, 1];
+export var face_nx = [2, 3];
+export var face_py = [4, 5];
+export var face_ny = [6, 7];
+export var face_pz = [8, 9];
+export var face_nz = [10, 11];

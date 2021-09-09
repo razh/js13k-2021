@@ -141,3 +141,12 @@ export var extrude = (() => {
     return extrudedGeom;
   };
 })();
+
+export var deleteFaces = rearg((geom, ...faceIndices) => {
+  faceIndices
+    .flat()
+    .sort()
+    .reverse()
+    .map(index => geom.faces.splice(index, 1));
+  return geom;
+});
