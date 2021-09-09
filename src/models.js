@@ -2,19 +2,32 @@ import { colors } from './boxColors.js';
 import { boxGeom_create } from './boxGeom.js';
 import {
   all,
+  face_nx,
+  face_ny,
+  face_px,
+  face_py,
   nx,
   nx_nz,
+  nx_py_nz,
   nx_pz,
+  ny_pz,
   nz,
   px,
   px_nz,
+  px_py_nz,
   px_pz,
+  py,
+  py_nz,
+  py_pz,
   pz,
 } from './boxIndices.js';
 import {
   $translate,
   $translateX,
   $translateZ,
+  align,
+  deleteFaces,
+  extrude,
   relativeAlign,
 } from './boxTransforms.js';
 import { geom_create, merge, translate } from './geom.js';
@@ -39,6 +52,85 @@ export var box = (dimensions, ...transforms) =>
   flow(...transforms)(boxGeom_create(...dimensions));
 
 export var mergeAll = (...geoms) => flow(...geoms.map(merge))(geom_create());
+
+export var dreadnought_create = () => {
+  var frontLength = 12288;
+  var width = 3072;
+
+  var sideGap = 512;
+  var sideWidth = (width - sideGap) / 2;
+
+  var deckHeight = 128;
+  var centerHeight = 512;
+  var slopeWidth = (5 / 6) * sideWidth;
+
+  var coreWidth = 1.5 * sideGap;
+  var coreHeight = 0.75 * centerHeight;
+  var coreLength = 3072;
+
+  var frontRightDeck = box(
+    [sideWidth, deckHeight, frontLength],
+    align(px),
+    $translateX([nx_pz, slopeWidth], [all, -sideGap / 2]),
+    deleteFaces(face_py),
+  );
+  var frontRightCenter = flow(
+    () => extrude(frontRightDeck, py, { y: centerHeight }),
+    $translate([nx_nz, { x: slopeWidth }], [py_pz, { y: -centerHeight }]),
+    deleteFaces(face_nx, face_ny),
+  )();
+  var frontRightSlope = flow(
+    () => extrude(frontRightCenter, nx, { x: -slopeWidth }),
+    $translate([nx_pz, { x: slopeWidth }], [nx_py_nz, { y: -centerHeight }]),
+    deleteFaces(face_px, face_ny),
+  )();
+  $translate([ny_pz, { y: deckHeight }])(frontRightDeck);
+
+  var frontLeftDeck = box(
+    [sideWidth, deckHeight, frontLength],
+    align(nx),
+    $translateX([px_pz, -slopeWidth], [all, sideGap / 2]),
+    deleteFaces(face_py),
+  );
+  var frontLeftCenter = flow(
+    () => extrude(frontLeftDeck, py, { y: centerHeight }),
+    $translate([px_nz, { x: -slopeWidth }], [py_pz, { y: -centerHeight }]),
+    deleteFaces(face_px, face_ny),
+  )();
+  var frontLeftSlope = flow(
+    () => extrude(frontLeftCenter, px, { x: slopeWidth }),
+    $translate([px_pz, { x: -slopeWidth }], [px_py_nz, { y: -centerHeight }]),
+    deleteFaces(face_nx, face_ny),
+  )();
+  $translate([ny_pz, { y: deckHeight }])(frontLeftDeck);
+
+  var geom = mergeAll(
+    frontRightDeck,
+    frontRightCenter,
+    frontRightSlope,
+    frontLeftDeck,
+    frontLeftCenter,
+    frontLeftSlope,
+    box(
+      [coreWidth, coreHeight, coreLength],
+      align(ny_pz),
+      $translate(
+        [all, { z: -frontLength / 3 }],
+        [py_nz, { y: -coreHeight / 3 }],
+      ),
+    ),
+  );
+
+  return mergeAll(
+    geom,
+    greeble_create(geom, 2048, () =>
+      box(
+        [randFloat(16, 128), randFloat(16, 128), randFloat(16, 64)],
+        align(pz),
+      ),
+    ),
+  );
+};
 
 export var greeble_create = (() => {
   var _v0 = vec3_create();

@@ -9,12 +9,20 @@ import { keys_create } from './keys.js';
 import { material_create } from './material.js';
 import { randFloatSpread } from './math.js';
 import { mesh_create } from './mesh.js';
-import { box, platform_create, starfield_create } from './models.js';
+import {
+  box,
+  dreadnought_create,
+  platform_create,
+  starfield_create,
+} from './models.js';
 import {
   object3d_add,
   object3d_create,
   object3d_lookAt,
   object3d_remove,
+  object3d_rotateX,
+  object3d_rotateY,
+  object3d_rotateZ,
 } from './object3d.js';
 import {
   BODY_BULLET,
@@ -166,6 +174,16 @@ export var map0 = (gl, scene, camera) => {
       starfieldMaterial,
     ),
   );
+
+  var dreadnoughtMaterial = material_create();
+  vec3_setScalar(dreadnoughtMaterial.specular, 1);
+  dreadnoughtMaterial.fog = false;
+  var dreadnoughtMesh = mesh_create(dreadnought_create(), dreadnoughtMaterial);
+  vec3_set(dreadnoughtMesh.position, 512, 1536, -6144);
+  object3d_rotateY(dreadnoughtMesh, -Math.PI / 2);
+  object3d_rotateX(dreadnoughtMesh, -Math.PI / 8);
+  object3d_rotateZ(dreadnoughtMesh, -Math.PI / 4);
+  object3d_add(map, dreadnoughtMesh);
 
   var enemyWidth = 0.8 * playerWidth;
   var enemyHeight = 0.8 * playerHeight;
