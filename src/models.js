@@ -4,17 +4,21 @@ import {
   all,
   face_nx,
   face_ny,
+  face_nz,
   face_px,
   face_py,
+  face_pz,
   nx,
   nx_nz,
   nx_py,
   nx_py_nz,
   nx_pz,
+  ny,
   ny_pz,
   nz,
   px,
   px_nz,
+  px_py,
   px_py_nz,
   px_pz,
   py,
@@ -69,6 +73,29 @@ export var bridge_create = (start, end, width, height) => {
     align(dx ? nx_py : py_nz),
     translate(start.x, start.y, start.z),
   );
+};
+
+export var column_create = () => {
+  var columnWidth = 24;
+  var columnHeight = 128;
+  var columnDepth = 16;
+
+  var base = box(
+    [columnDepth, (3 / 16) * columnHeight, columnWidth],
+    align(ny),
+  );
+  var middle = flow(
+    () => extrude(base, py, { y: (3 / 4) * columnHeight }),
+    $translateX([px_py, -columnDepth / 2]),
+    deleteFaces(face_ny),
+  )();
+  var top = flow(
+    () => extrude(middle, py, { y: (1 / 16) * columnHeight }),
+    $translateX([px_py, -columnDepth / 2]),
+    deleteFaces(face_ny),
+  )();
+
+  return mergeAll(base, middle, top);
 };
 
 export var dreadnought_create = () => {
@@ -245,17 +272,23 @@ export var greeble_create = (() => {
 export var platform_create = (width, height, depth, strokeWidth) => {
   var innerWidth = width - 4 * strokeWidth;
   var innerDepth = depth - 4 * strokeWidth;
+  var deleteSideFaces = deleteFaces(face_px, face_nx, face_pz, face_nz);
 
-  var base = box([width - 2 * strokeWidth, height, innerDepth]);
+  var base = box(
+    [width - 2 * strokeWidth, height, innerDepth],
+    deleteSideFaces,
+  );
   var frontBase = box(
     [innerWidth, height, strokeWidth],
     relativeAlign(nz, base, pz),
     $translateX([nx_nz, -strokeWidth], [px_nz, strokeWidth]),
+    deleteSideFaces,
   );
   var backBase = box(
     [innerWidth, height, strokeWidth],
     relativeAlign(pz, base, nz),
     $translateX([nx_pz, -strokeWidth], [px_pz, strokeWidth]),
+    deleteSideFaces,
   );
 
   var strokeDimensions = [strokeWidth, height, strokeWidth];
@@ -270,24 +303,28 @@ export var platform_create = (width, height, depth, strokeWidth) => {
       [innerWidth, height, strokeWidth],
       relativeAlign(nz, frontBase, pz),
       $translateX([nx_pz, -halfStrokeWidth], [px_pz, halfStrokeWidth]),
+      deleteFaces(face_px, face_nx, face_nz),
       strokeColor,
     ),
     box(
       [innerWidth, height, strokeWidth],
       relativeAlign(pz, backBase, nz),
       $translateX([nx_nz, -halfStrokeWidth], [px_nz, halfStrokeWidth]),
+      deleteFaces(face_px, face_nx, face_pz),
       strokeColor,
     ),
     box(
       [strokeWidth, height, innerDepth],
       relativeAlign(nx, base, px),
       $translateZ([px_nz, -halfStrokeWidth], [px_pz, halfStrokeWidth]),
+      deleteFaces(face_nx, face_pz, face_nz),
       strokeColor,
     ),
     box(
       [strokeWidth, height, innerDepth],
       relativeAlign(px, base, nx),
       $translateZ([nx_nz, -halfStrokeWidth], [nx_pz, halfStrokeWidth]),
+      deleteFaces(face_px, face_pz, face_nz),
       strokeColor,
     ),
     box(

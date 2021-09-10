@@ -14,6 +14,7 @@ import { mesh_create } from './mesh.js';
 import {
   box,
   bridge_create,
+  column_create,
   dreadnought_create,
   platform_create,
   starfield_create,
@@ -123,13 +124,14 @@ export var map0 = (gl, scene, camera) => {
   };
 
   [
+    // Target for testing bullet tunneling.
     [
-      [32, 32, 32],
-      [0, 0, -128],
+      [32, 16, 8],
+      [0, 16, -128],
     ],
     [
-      [8, 24, 128],
-      [32, 0, -8],
+      [32, 24, 64],
+      [48, 0, 0],
     ],
     [
       [256, 64, 256],
@@ -169,6 +171,13 @@ export var map0 = (gl, scene, camera) => {
     createStaticMeshFromGeometry(
       bridge_create(vec3_create(...start), vec3_create(...end), width, height),
     ),
+  );
+
+  vec3_set(
+    createStaticMeshFromGeometry(column_create()).position,
+    -32,
+    0,
+    -128,
   );
 
   var starfieldMaterial = material_create();

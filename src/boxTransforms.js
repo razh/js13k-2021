@@ -145,7 +145,7 @@ export var extrude = (() => {
 export var deleteFaces = rearg((geom, ...faceIndices) => {
   faceIndices
     .flat()
-    .sort()
+    .sort((a, b) => a - b)
     .reverse()
     .map(index => geom.faces.splice(index, 1));
   return geom;
