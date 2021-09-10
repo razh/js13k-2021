@@ -1,19 +1,13 @@
 import { randFloatSpread } from './math.js';
 
-var Context =
-  window.AudioContext ||
-  // eslint-disable-next-line no-undef
-  webkitAudioContext;
-
-var audioContext = new Context();
+var audioContext = new AudioContext();
 var { sampleRate } = audioContext;
 
 // A4 is 69.
 var toFreq = note => 2 ** ((note - 69) / 12) * 440;
 
-var playSound = (sound, destination = audioContext.destination) => {
-  var source = audioContext.createBufferSource();
-  source.buffer = sound;
+var playSound = (buffer, destination = audioContext.destination) => {
+  var source = new AudioBufferSourceNode(audioContext, { buffer });
   source.connect(destination);
   source.start();
 };
@@ -21,7 +15,7 @@ var playSound = (sound, destination = audioContext.destination) => {
 var generateAudioBuffer = (fn, duration, volume) => {
   var length = duration * sampleRate;
 
-  var buffer = audioContext.createBuffer(1, length, sampleRate);
+  var buffer = new AudioBuffer({ length, sampleRate });
   var channel = buffer.getChannelData(0);
   for (var i = 0; i < length; i++) {
     channel[i] = fn(i / sampleRate, i, channel) * volume;
@@ -114,20 +108,13 @@ var adsr = (attack, decay, sustain, release, sustainVolume) => {
 };
 
 // Reverb
-var wet = audioContext.createGain();
-wet.gain.value = 0.3;
-wet.connect(audioContext.destination);
+var wet = new GainNode(audioContext, { gain: 0.3 });
+var dry = new GainNode(audioContext, { gain: 1 - wet.gain.value });
+var convolver = new ConvolverNode(audioContext);
+var destination = new GainNode(audioContext);
 
-var dry = audioContext.createGain();
-dry.gain.value = 1 - wet.gain.value;
-dry.connect(audioContext.destination);
-
-var convolver = audioContext.createConvolver();
-convolver.connect(wet);
-
-var destination = audioContext.createGain();
-destination.connect(dry);
-destination.connect(convolver);
+destination.connect(dry).connect(audioContext.destination);
+destination.connect(convolver).connect(wet).connect(audioContext.destination);
 
 // https://github.com/Tonejs/Tone.js/blob/dev/Tone/effect/Reverb.ts
 (async () => {
@@ -141,15 +128,15 @@ destination.connect(convolver);
     sampleRate,
   );
 
-  var gainNode = offlineContext.createGain();
-  gainNode.gain.setValueAtTime(0, 0);
+  var gainNode = new GainNode(offlineContext, { gain: 0 });
   gainNode.gain.setValueAtTime(1, preDelay);
   gainNode.gain.exponentialRampToValueAtTime(0.01, duration);
-  gainNode.connect(offlineContext.destination);
 
-  var offlineBufferSource = offlineContext.createBufferSource();
-  offlineBufferSource.buffer = generateAudioBuffer(noise(), duration, 1);
-  offlineBufferSource.connect(gainNode);
+  var offlineBufferSource = new AudioBufferSourceNode(offlineContext, {
+    buffer: generateAudioBuffer(noise(), duration, 1),
+  });
+
+  offlineBufferSource.connect(gainNode).connect(offlineContext.destination);
   offlineBufferSource.start();
 
   convolver.buffer = await offlineContext.startRendering();
