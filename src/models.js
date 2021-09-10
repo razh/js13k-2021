@@ -10,18 +10,22 @@ import {
   face_pz,
   nx,
   nx_ny,
+  nx_ny_pz,
   nx_nz,
   nx_py,
   nx_py_nz,
+  nx_py_pz,
   nx_pz,
   ny,
   ny_pz,
   nz,
   px,
   px_ny,
+  px_ny_pz,
   px_nz,
   px_py,
   px_py_nz,
+  px_py_pz,
   px_pz,
   py,
   py_nz,
@@ -42,10 +46,12 @@ import { DEBUG } from './constants.js';
 import { geom_create, merge, translate } from './geom.js';
 import { mat4_create, mat4_lookAt, mat4_setPosition } from './mat4.js';
 import { randFloat } from './math.js';
+import { quat_create, quat_setFromEuler } from './quat.js';
 import { flow } from './utils.js';
 import {
   vec3_addScaledVector,
   vec3_applyMatrix4,
+  vec3_applyQuaternion,
   vec3_create,
   vec3_cross,
   vec3_length,
@@ -271,6 +277,73 @@ export var greeble_create = (() => {
     );
   };
 })();
+
+export var phantom_create = () => {
+  var width = 40;
+  var height = 72;
+  var depth = 16;
+  var gap = 4;
+  var y = 8;
+
+  var sideWidth = (width - gap) / 2;
+  var sideHeight = 56;
+
+  var eyeColor = vec3_create(16, 1, 1);
+  var eyeSize = 8;
+
+  var head = box(
+    [width, height - sideHeight - gap, depth],
+    align(ny),
+    $translate(
+      [all, { y: sideHeight + gap }],
+      [px_py, { x: -width / 2 }],
+      [nx_py, { x: width / 2 }],
+      [py_pz, { z: -depth }],
+      [px_ny_pz, { x: -width / 2 }],
+      [nx_ny_pz, { x: width / 2 }],
+      [ny_pz, { y: -2 * gap }],
+    ),
+  );
+  var rightSide = box(
+    [sideWidth, sideHeight, depth],
+    align(px_ny),
+    $translate(
+      [all, { x: -gap / 2 }],
+      [nx_ny, { x: sideWidth }],
+      [px_py, { y: -2 * gap }],
+      [ny_pz, { z: -depth }],
+      [nx_py_pz, { z: -depth }],
+    ),
+  );
+  var leftSide = box(
+    [sideWidth, sideHeight, depth],
+    align(nx_ny),
+    $translate(
+      [all, { x: gap / 2 }],
+      [px_ny, { x: -sideWidth }],
+      [nx_py, { y: -2 * gap }],
+      [ny_pz, { z: -depth }],
+      [px_py_pz, { z: -depth }],
+    ),
+  );
+
+  var eyeRotation = quat_setFromEuler(
+    quat_create(),
+    vec3_create(Math.PI / 4, -Math.PI / 4, 0),
+  );
+
+  var eye = box(
+    [eyeSize, eyeSize, eyeSize],
+    geom => {
+      geom.vertices.map(vertex => vec3_applyQuaternion(vertex, eyeRotation));
+      return geom;
+    },
+    faceColors([face_px, eyeColor], [face_py, eyeColor], [face_pz, eyeColor]),
+    translate(0, sideHeight - gap / 2, -depth / 4),
+  );
+
+  return translate(0, y, 0)(mergeAll(head, rightSide, leftSide, eye));
+};
 
 export var platform_create = (width, height, depth, strokeWidth) => {
   var innerWidth = width - 4 * strokeWidth;

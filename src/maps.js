@@ -16,6 +16,7 @@ import {
   bridge_create,
   column_create,
   dreadnought_create,
+  phantom_create,
   platform_create,
   scanner_create,
   starfield_create,
@@ -204,6 +205,24 @@ export var map0 = (gl, scene, camera) => {
   object3d_rotateZ(dreadnoughtMesh, -Math.PI / 4);
   object3d_add(map, dreadnoughtMesh);
 
+  var phantomMaterial = material_create();
+  var phantomMesh = physics_add(
+    mesh_create(phantom_create(), phantomMaterial),
+    BODY_STATIC,
+  );
+  vec3_setScalar(phantomMaterial.color, 0.5);
+  vec3_setScalar(phantomMaterial.specular, 1);
+  phantomMesh.castShadow = true;
+  phantomMesh.receiveShadow = true;
+  vec3_set(phantomMesh.position, -128, 0, -64);
+  object3d_add(map, phantomMesh);
+  entity_add(
+    phantomMesh,
+    component_create(
+      () => (phantomMesh.position.z = 96 * Math.cos(1e-3 * Date.now())),
+    ),
+  );
+
   var scannerMaterial = material_create();
   vec3_setScalar(scannerMaterial.color, 0.5);
   vec3_setScalar(scannerMaterial.specular, 1);
@@ -219,7 +238,7 @@ export var map0 = (gl, scene, camera) => {
   entity_add(
     scannerMesh,
     component_create(
-      () => (scannerMesh.position.z = 128 * Math.sin(1e-3 * Date.now())),
+      () => (scannerMesh.position.z = 96 * Math.sin(1e-3 * Date.now())),
     ),
   );
 
