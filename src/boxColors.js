@@ -29,3 +29,13 @@ export var applyBoxVertexColors = (geom, ...colors) => {
 };
 
 export var colors = rearg(applyBoxVertexColors);
+
+export var applyBoxFaceColors = (geom, ...colors) => {
+  colors.map(([indices, value]) =>
+    indices.map(index => setVector(geom.faces[index].color, value)),
+  );
+
+  return geom;
+};
+
+export var faceColors = rearg(applyBoxFaceColors);

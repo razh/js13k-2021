@@ -1,4 +1,4 @@
-import { colors } from './boxColors.js';
+import { colors, faceColors } from './boxColors.js';
 import { boxGeom_create } from './boxGeom.js';
 import {
   all,
@@ -382,10 +382,7 @@ export var scanner_create = () => {
   var head = box(
     [size, size, headLength],
     $scale([pz, { x: 0.5, y: 0.5 }]),
-    geom => {
-      face_pz.map(index => Object.assign(geom.faces[index].color, eyeColor));
-      return geom;
-    },
+    faceColors([face_pz, eyeColor]),
     deleteFaces(face_nz),
   );
   return mergeAll(
