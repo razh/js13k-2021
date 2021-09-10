@@ -13,6 +13,7 @@ import { randFloatSpread } from './math.js';
 import { mesh_create } from './mesh.js';
 import {
   box,
+  bridge_create,
   dreadnought_create,
   platform_create,
   starfield_create,
@@ -161,6 +162,12 @@ export var map0 = (gl, scene, camera) => {
     vec3_set(
       createStaticMeshFromGeometry(platform_create(...dimensions)).position,
       ...position,
+    ),
+  );
+
+  [[[0, 52, -240], [192, 52, -240], 64, 8]].map(([start, end, width, height]) =>
+    createStaticMeshFromGeometry(
+      bridge_create(vec3_create(...start), vec3_create(...end), width, height),
     ),
   );
 

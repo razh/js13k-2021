@@ -8,6 +8,7 @@ import {
   face_py,
   nx,
   nx_nz,
+  nx_py,
   nx_py_nz,
   nx_pz,
   ny_pz,
@@ -30,6 +31,7 @@ import {
   extrude,
   relativeAlign,
 } from './boxTransforms.js';
+import { DEBUG } from './constants.js';
 import { geom_create, merge, translate } from './geom.js';
 import { mat4_create, mat4_lookAt, mat4_setPosition } from './mat4.js';
 import { randFloat } from './math.js';
@@ -52,6 +54,22 @@ export var box = (dimensions, ...transforms) =>
   flow(...transforms)(boxGeom_create(...dimensions));
 
 export var mergeAll = (...geoms) => flow(...geoms.map(merge))(geom_create());
+
+export var bridge_create = (start, end, width, height) => {
+  vec3_subVectors(_vector, end, start);
+  var dx = _vector.x;
+  var dz = _vector.z;
+
+  if (DEBUG && (dx < 0 || dz < 0)) {
+    throw new Error('bridge_create: start is after end');
+  }
+
+  return box(
+    dx ? [dx, height, width] : [width, height, dz],
+    align(dx ? nx_py : py_nz),
+    translate(start.x, start.y, start.z),
+  );
+};
 
 export var dreadnought_create = () => {
   var frontLength = 12288;
