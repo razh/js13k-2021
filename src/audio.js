@@ -42,6 +42,21 @@ var generateNotes = (fn, duration, volume) =>
 // f: frequency, t: parameter.
 var sin = f => t => Math.sin(t * 2 * Math.PI * f);
 
+var saw = f => t => {
+  var n = ((t % (1 / f)) * f) % 1;
+  return -1 + 2 * n;
+};
+
+var tri = f => t => {
+  var n = ((t % (1 / f)) * f) % 1;
+  return n < 0.5 ? -1 + 2 * (2 * n) : 1 - 2 * (2 * n);
+};
+
+var square = f => t => {
+  var n = ((t % (1 / f)) * f) % 1;
+  return n > 0.5 ? 1 : -1;
+};
+
 var decay = d => () => t => Math.exp(-t * d);
 
 // Brown noise.
