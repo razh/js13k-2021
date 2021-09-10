@@ -9,6 +9,7 @@ import {
   face_py,
   face_pz,
   nx,
+  nx_ny,
   nx_nz,
   nx_py,
   nx_py_nz,
@@ -17,6 +18,7 @@ import {
   ny_pz,
   nz,
   px,
+  px_ny,
   px_nz,
   px_py,
   px_py_nz,
@@ -27,6 +29,7 @@ import {
   pz,
 } from './boxIndices.js';
 import {
+  $scale,
   $translate,
   $translateX,
   $translateZ,
@@ -366,6 +369,33 @@ export var platform_create = (width, height, depth, strokeWidth) => {
         [nx_nz, { x: halfStrokeWidth, z: -halfStrokeWidth }],
       ),
       strokeColor,
+    ),
+  );
+};
+
+export var scanner_create = () => {
+  var size = 16;
+  var length = 32;
+  var headLength = 6;
+  var eyeColor = vec3_create(16, 1, 1);
+
+  var head = box(
+    [size, size, headLength],
+    $scale([pz, { x: 0.5, y: 0.5 }]),
+    geom => {
+      face_pz.map(index => Object.assign(geom.faces[index].color, eyeColor));
+      return geom;
+    },
+    deleteFaces(face_nz),
+  );
+  return mergeAll(
+    head,
+    // Tail
+    box(
+      [size, size, length - headLength],
+      relativeAlign(pz, head, nz),
+      $scale([nz, { x: 0, y: 0 }]),
+      deleteFaces(face_pz),
     ),
   );
 };

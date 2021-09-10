@@ -17,6 +17,7 @@ import {
   column_create,
   dreadnought_create,
   platform_create,
+  scanner_create,
   starfield_create,
 } from './models.js';
 import {
@@ -202,6 +203,25 @@ export var map0 = (gl, scene, camera) => {
   object3d_rotateX(dreadnoughtMesh, -Math.PI / 8);
   object3d_rotateZ(dreadnoughtMesh, -Math.PI / 4);
   object3d_add(map, dreadnoughtMesh);
+
+  var scannerMaterial = material_create();
+  vec3_setScalar(scannerMaterial.color, 0.5);
+  vec3_setScalar(scannerMaterial.specular, 1);
+  var scannerMesh = physics_add(
+    mesh_create(scanner_create(), scannerMaterial),
+    BODY_STATIC,
+  );
+  vec3_set(scannerMesh.position, -64, 52, -128);
+  scannerMesh.castShadow = true;
+  scannerMesh.receiveShadow = true;
+  object3d_rotateZ(scannerMesh, Math.PI / 4);
+  object3d_add(map, scannerMesh);
+  entity_add(
+    scannerMesh,
+    component_create(
+      () => (scannerMesh.position.z = 128 * Math.sin(1e-3 * Date.now())),
+    ),
+  );
 
   var enemyWidth = 0.8 * playerWidth;
   var enemyHeight = 0.8 * playerHeight;
