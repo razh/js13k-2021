@@ -1,16 +1,32 @@
 import { bufferAttr_copyVector3sArray } from './bufferAttr.js';
-import { directGeom_fromGeom } from './directGeom.js';
 
-export var bufferGeom_fromGeom = geom =>
-  bufferGeom_fromDirectGeom(directGeom_fromGeom(geom));
+export var bufferGeom_fromGeom = geom => {
+  var vertices = [];
+  var colors = [];
 
-export var bufferGeom_fromDirectGeom = geom => ({
-  position: bufferAttr_copyVector3sArray(
-    new Float32Array(geom.vertices.length * 3),
-    geom.vertices,
-  ),
-  color: bufferAttr_copyVector3sArray(
-    new Float32Array(geom.colors.length * 3),
-    geom.colors,
-  ),
-});
+  geom.faces.map(face => {
+    vertices.push(
+      geom.vertices[face.a],
+      geom.vertices[face.b],
+      geom.vertices[face.c],
+    );
+
+    var { color, vertexColors } = face;
+    if (vertexColors.length === 3) {
+      colors.push(...vertexColors);
+    } else {
+      colors.push(color, color, color);
+    }
+  });
+
+  return {
+    position: bufferAttr_copyVector3sArray(
+      new Float32Array(vertices.length * 3),
+      vertices,
+    ),
+    color: bufferAttr_copyVector3sArray(
+      new Float32Array(colors.length * 3),
+      colors,
+    ),
+  };
+};
