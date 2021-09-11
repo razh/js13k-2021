@@ -4,7 +4,7 @@ export default `
 precision highp float;
 precision highp int;
 
-vec4 packDepthToRGBA(const in float v) {
+vec4 packDepthToRGBA(float v) {
   vec4 r = vec4(
     fract(
       v *

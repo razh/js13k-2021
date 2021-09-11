@@ -20,7 +20,6 @@ import {
   getAttributeLocations,
   getUniformLocations,
   setFloat32Attribute,
-  setFloatUniform,
   setMat4Uniform,
   setVec3Uniform,
 } from './shader.js';
@@ -190,12 +189,12 @@ var renderMesh = mesh => {
 
   gl.uniform1i(uniforms.fog, material.fog);
   setVec3Uniform(gl, uniforms.fogColor, scene.fogColor);
-  setFloatUniform(gl, uniforms.fogNear, scene.fogNear);
-  setFloatUniform(gl, uniforms.fogFar, scene.fogFar);
+  gl.uniform1f(uniforms.fogNear, scene.fogNear);
+  gl.uniform1f(uniforms.fogFar, scene.fogFar);
 
   setVec3Uniform(gl, uniforms.diffuse, material.color);
   setVec3Uniform(gl, uniforms.specular, material.specular);
-  setFloatUniform(gl, uniforms.shininess, material.shininess);
+  gl.uniform1f(uniforms.shininess, material.shininess);
   setVec3Uniform(gl, uniforms.emissive, material.emissive);
 
   gl.uniform1i(uniforms.receiveShadow, mesh.receiveShadow);
@@ -267,8 +266,8 @@ var render = () => {
     directional.intensity,
   );
 
-  setVec3Uniform(gl, uniforms[`directionalLight.direction`], direction);
-  setVec3Uniform(gl, uniforms[`directionalLight.color`], color);
+  setVec3Uniform(gl, uniforms['directionalLight.direction'], direction);
+  setVec3Uniform(gl, uniforms['directionalLight.color'], color);
   setMat4Uniform(
     gl,
     uniforms.directionalShadowMatrix,
@@ -293,10 +292,10 @@ var animate = () => {
 };
 
 var setSize = (width, height) => {
-  canvas.width = width * (devicePixelRatio || 1);
-  canvas.height = height * (devicePixelRatio || 1);
-  canvas.style.width = `${width}px`;
-  canvas.style.height = `${height}px`;
+  canvas.width = width * devicePixelRatio;
+  canvas.height = height * devicePixelRatio;
+  canvas.style.width = width + 'px';
+  canvas.style.height = height + 'px';
   gl.viewport(0, 0, canvas.width, canvas.height);
 
   camera.aspect = width / height;

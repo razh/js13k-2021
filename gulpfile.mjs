@@ -142,6 +142,7 @@ function glslMangle() {
           case id.endsWith('phong_frag.glsl.js'):
             return [
               'saturate',
+              'DirectionalLight',
               'diffuseColor',
               'normal',
               'viewDir',

@@ -144,8 +144,9 @@ destination.connect(convolver).connect(wet).connect(audioContext.destination);
   );
 
   var gainNode = new GainNode(offlineContext, { gain: 0 });
-  gainNode.gain.setValueAtTime(1, preDelay);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, duration);
+  gainNode.gain
+    .setValueAtTime(1, preDelay)
+    .exponentialRampToValueAtTime(0.01, duration);
 
   var offlineBufferSource = new AudioBufferSourceNode(offlineContext, {
     buffer: generateAudioBuffer(noise(), duration, 1),

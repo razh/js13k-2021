@@ -141,6 +141,7 @@ export var dreadnought_create = () => {
     [sideWidth, deckHeight, frontLength],
     align(px),
     $translateX([nx_pz, slopeWidth], [all, -sideGap / 2]),
+    $translate([ny_pz, { y: deckHeight }]),
     deleteFaces(face_py),
   );
   var frontRightCenter = flow(
@@ -153,12 +154,12 @@ export var dreadnought_create = () => {
     $translate([nx_pz, { x: slopeWidth }], [nx_py_nz, { y: -centerHeight }]),
     deleteFaces(face_px, face_ny),
   )();
-  $translate([ny_pz, { y: deckHeight }])(frontRightDeck);
 
   var frontLeftDeck = box(
     [sideWidth, deckHeight, frontLength],
     align(nx),
     $translateX([px_pz, -slopeWidth], [all, sideGap / 2]),
+    $translate([ny_pz, { y: deckHeight }]),
     deleteFaces(face_py),
   );
   var frontLeftCenter = flow(
@@ -171,7 +172,6 @@ export var dreadnought_create = () => {
     $translate([px_pz, { x: -slopeWidth }], [px_py_nz, { y: -centerHeight }]),
     deleteFaces(face_nx, face_ny),
   )();
-  $translate([ny_pz, { y: deckHeight }])(frontLeftDeck);
 
   var geom = mergeAll(
     frontRightDeck,

@@ -18,19 +18,18 @@ export var geom_create = () => ({
 export var geom_push = (geom, vertices, faces) => {
   var offset = geom.vertices.length;
 
-  var i;
-  for (i = 0; i < vertices.length; i += 3) {
+  for (var i = 0; i < vertices.length; ) {
     geom.vertices.push(
-      vec3_create(vertices[i], vertices[i + 1], vertices[i + 2]),
+      vec3_create(vertices[i++], vertices[i++], vertices[i++]),
     );
   }
 
-  for (i = 0; i < faces.length; i += 3) {
+  for (i = 0; i < faces.length; ) {
     geom.faces.push(
       face3_create(
-        offset + faces[i],
-        offset + faces[i + 1],
-        offset + faces[i + 2],
+        offset + faces[i++],
+        offset + faces[i++],
+        offset + faces[i++],
       ),
     );
   }
