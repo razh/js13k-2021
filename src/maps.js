@@ -1,5 +1,4 @@
-import './audio.js';
-
+import { playShoot } from './audio.js';
 import { boxGeom_create } from './boxGeom.js';
 import { ny, py } from './boxIndices.js';
 import { $scale, align } from './boxTransforms.js';
@@ -335,6 +334,8 @@ export var map0 = (gl, scene, camera) => {
       Object.assign(cameraObject.position, playerMesh.position);
 
       if (bulletInterval(dt, isMouseDown)) {
+        playShoot();
+
         var bulletGeometry = boxGeom_create(2, 2, 8);
         var bulletMaterial = material_create();
         vec3_set(bulletMaterial.emissive, 0.5, 0.5, 2);

@@ -157,4 +157,9 @@ destination.connect(convolver).connect(wet).connect(audioContext.destination);
   convolver.buffer = await offlineContext.startRendering();
 })();
 
+var play = sound => playSound(sound, destination);
+
+var shoot = generateNotes(mul(noise, decay(24)), 0.5, 1);
+export var playShoot = () => play(shoot[0]);
+
 addEventListener('click', () => audioContext.resume(), { once: true });
