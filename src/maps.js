@@ -217,6 +217,25 @@ export var map0 = (gl, scene, camera) => {
       () => (phantomMesh.position.z = 96 * Math.cos(1e-3 * Date.now())),
     ),
   );
+  var enemyHealth_create = (enemy, initialHealth) => {
+    var health = initialHealth;
+    var hitTimeout;
+    get_physics_component(enemy).collide = entity => {
+      var entityPhysics = get_physics_component(entity).physics;
+      if (entityPhysics === BODY_BULLET) {
+        health--;
+        clearTimeout(hitTimeout);
+        if (health <= 0) {
+          createExplosion(enemy.position);
+          object3d_remove(map, enemy);
+        } else {
+          enemy.material.emissive.x = 1;
+          hitTimeout = setTimeout(() => (enemy.material.emissive.x = 0), 48);
+        }
+      }
+    };
+  };
+  enemyHealth_create(phantomMesh, 10);
 
   var scannerMaterial = material_create();
   vec3_setScalar(scannerMaterial.color, 0.5);
@@ -236,6 +255,7 @@ export var map0 = (gl, scene, camera) => {
       () => (scannerMesh.position.z = 96 * Math.sin(1e-3 * Date.now())),
     ),
   );
+  enemyHealth_create(scannerMesh, 5);
 
   var enemyWidth = 0.8 * playerWidth;
   var enemyHeight = 0.8 * playerHeight;
