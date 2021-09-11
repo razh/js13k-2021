@@ -185,14 +185,9 @@ export var map0 = (gl, scene, camera) => {
   var starfieldMaterial = material_create();
   vec3_setScalar(starfieldMaterial.emissive, 1);
   starfieldMaterial.fog = false;
-  var starfieldOuterRadius = 15360;
-  var starfieldInnerRadius = starfieldOuterRadius - 256;
   object3d_add(
     cameraObject,
-    mesh_create(
-      starfield_create(starfieldInnerRadius, starfieldOuterRadius, 256),
-      starfieldMaterial,
-    ),
+    mesh_create(starfield_create(15360, 512), starfieldMaterial),
   );
 
   var dreadnoughtMaterial = material_create();

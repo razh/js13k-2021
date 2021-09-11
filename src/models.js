@@ -548,15 +548,14 @@ export var scanner_create = () => {
   );
 };
 
-export var starfield_create = (innerRadius, outerRadius, count) => {
+export var starfield_create = (radius, count) => {
   var stars = [];
 
   for (var i = 0; i < count; i++) {
     var theta = 2 * Math.PI * Math.random();
     var u = 2 * Math.random() - 1;
     var v = Math.sqrt(1 - u * u);
-    var radius = randFloat(innerRadius, outerRadius);
-    var size = randFloat(12, 24);
+    var size = randFloat(8, 32);
 
     stars.push(
       box(
