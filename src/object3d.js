@@ -41,8 +41,10 @@ export var object3d_create = () => ({
 });
 
 export var object3d_lookAt = (object, vector) => {
-  mat4_lookAt(_m1, vector, object.position, vec3_Y);
-  quat_setFromRotationMatrix(object.quaternion, _m1);
+  quat_setFromRotationMatrix(
+    object.quaternion,
+    mat4_lookAt(_m1, vector, object.position, vec3_Y),
+  );
 };
 
 export var object3d_add = (parent, child) => {
@@ -61,8 +63,7 @@ export var object3d_remove = (parent, child) => {
 export var object3d_rotateOnAxis = (obj, axis, angle) => {
   // rotate object on axis in object space
   // axis is assumed to be normalized
-  quat_setFromAxisAngle(_q1, axis, angle);
-  quat_multiply(obj.quaternion, _q1);
+  quat_multiply(obj.quaternion, quat_setFromAxisAngle(_q1, axis, angle));
   return obj;
 };
 
@@ -78,8 +79,13 @@ export var object3d_rotateZ = (obj, angle) =>
 export var object3d_translateOnAxis = (obj, axis, distance) => {
   // translate object by distance along axis in object space
   // axis is assumed to be normalized
-  vec3_applyQuaternion(Object.assign(_v1, axis), obj.quaternion);
-  vec3_add(obj.position, vec3_multiplyScalar(_v1, distance));
+  vec3_add(
+    obj.position,
+    vec3_multiplyScalar(
+      vec3_applyQuaternion(Object.assign(_v1, axis), obj.quaternion),
+      distance,
+    ),
+  );
   return obj;
 };
 

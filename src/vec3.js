@@ -259,5 +259,5 @@ export var pm_clipVelocity = (vector, normal, overbounce) => {
     backoff /= overbounce;
   }
 
-  vec3_addScaledVector(vector, normal, -backoff);
+  return vec3_addScaledVector(vector, normal, -backoff);
 };

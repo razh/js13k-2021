@@ -15,8 +15,10 @@ export var lightShadow_updateMatrices = (lightShadow, light) => {
 
   vec3_setFromMatrixPosition(camera.position, light.matrixWorld);
 
-  vec3_setFromMatrixPosition(_lookTarget, light.target.matrixWorld);
-  camera_lookAt(camera, _lookTarget);
+  camera_lookAt(
+    camera,
+    vec3_setFromMatrixPosition(_lookTarget, light.target.matrixWorld),
+  );
   camera_updateWorldMatrix(camera);
 
   // prettier-ignore
@@ -27,6 +29,9 @@ export var lightShadow_updateMatrices = (lightShadow, light) => {
     0.5, 0.5, 0.5, 1
   ]);
 
-  mat4_multiplyMatrices(matrix, matrix, camera.projectionMatrix);
-  mat4_multiplyMatrices(matrix, matrix, camera.matrixWorldInverse);
+  mat4_multiplyMatrices(
+    matrix,
+    mat4_multiplyMatrices(matrix, matrix, camera.projectionMatrix),
+    camera.matrixWorldInverse,
+  );
 };

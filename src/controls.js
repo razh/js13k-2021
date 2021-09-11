@@ -18,16 +18,20 @@ export var controls_create = object => {
         return;
       }
 
-      pitchEuler.x -= event.movementY * controls.sensitivity;
+      pitchEuler.x = clamp(
+        pitchEuler.x - event.movementY * controls.sensitivity,
+        -Math.PI / 2,
+        Math.PI / 2,
+      );
       yawEuler.y -= event.movementX * controls.sensitivity;
 
-      pitchEuler.x = clamp(pitchEuler.x, -Math.PI / 2, Math.PI / 2);
-
-      quat_setFromEuler(pitchQuat, pitchEuler);
-      quat_setFromEuler(yawQuat, yawEuler);
-
-      quat_multiply(yawQuat, pitchQuat);
-      Object.assign(object.quaternion, yawQuat);
+      Object.assign(
+        object.quaternion,
+        quat_multiply(
+          quat_setFromEuler(yawQuat, yawEuler),
+          quat_setFromEuler(pitchQuat, pitchEuler),
+        ),
+      );
     },
   };
 

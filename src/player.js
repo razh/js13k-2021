@@ -4,6 +4,7 @@ import {
   box3_expandByPoint,
   box3_overlapsBox,
   box3_translate,
+  box3_union,
 } from './box3.js';
 import { BODY_BULLET, physics_bodies, sweptAABB } from './physics.js';
 import {
@@ -121,19 +122,24 @@ var player_trace = (() => {
     );
 
     Object.assign(originalVelocity, player.body.velocity);
+    Object.assign(player.body.velocity, vec3_subVectors(velocity, end, start));
 
-    vec3_subVectors(velocity, end, start);
-    Object.assign(player.body.velocity, velocity);
-
-    box3_translate(box3_copy(boxA, player.body.boundingBox), start);
-    box3_translate(box3_copy(sweptBoxA, player.body.boundingBox), end);
-    box3_expandByPoint(sweptBoxA, boxA.min);
-    box3_expandByPoint(sweptBoxA, boxA.max);
+    box3_union(
+      box3_translate(box3_copy(sweptBoxA, player.body.boundingBox), end),
+      box3_translate(box3_copy(boxA, player.body.boundingBox), start),
+    );
 
     for (var i = 0; i < bodies.length; i++) {
       var body = bodies[i];
-      box3_translate(box3_copy(boxB, body.boundingBox), body.parent.position);
-      if (!box3_overlapsBox(sweptBoxA, boxB)) {
+      if (
+        !box3_overlapsBox(
+          sweptBoxA,
+          box3_translate(
+            box3_copy(boxB, body.boundingBox),
+            body.parent.position,
+          ),
+        )
+      ) {
         continue;
       }
 
@@ -186,16 +192,18 @@ var player_slideMove = (() => {
     }
 
     // never turn against original velocity
-    Object.assign(planes[numplanes], player.body.velocity);
-    vec3_normalize(planes[numplanes]);
+    vec3_normalize(Object.assign(planes[numplanes], player.body.velocity));
     numplanes++;
 
     var bumpcount;
     var numbumps = 4;
     for (bumpcount = 0; bumpcount < numbumps; bumpcount++) {
       // calculate position we are trying to move to
-      Object.assign(end, player.object.position);
-      vec3_addScaledVector(end, player.body.velocity, time_left);
+      vec3_addScaledVector(
+        Object.assign(end, player.object.position),
+        player.body.velocity,
+        time_left,
+      );
 
       // see if we can make it there
       player_trace(player, trace, player.object.position, end);
@@ -223,13 +231,12 @@ var player_slideMove = (() => {
         return true;
       }
 
-      var i;
       //
       // if this is the same plane we hit before, nudge velocity
       // out along it, which fixes some epsilon issues with
       // non-axial planes
       //
-      for (i = 0; i < numplanes; i++) {
+      for (var i = 0; i < numplanes; i++) {
         if (vec3_dot(trace.normal, planes[i]) > 0.99) {
           vec3_add(player.body.velocity, trace.normal);
           break;
@@ -255,13 +262,19 @@ var player_slideMove = (() => {
         }
 
         // slide along the plane
-        Object.assign(clipVelocity, player.body.velocity);
-        pm_clipVelocity(clipVelocity, planes[i], OVERCLIP);
+        pm_clipVelocity(
+          Object.assign(clipVelocity, player.body.velocity),
+          planes[i],
+          OVERCLIP,
+        );
 
         if (gravity) {
           // slide along the plane
-          Object.assign(endClipVelocity, endVelocity);
-          pm_clipVelocity(endClipVelocity, planes[i], OVERCLIP);
+          pm_clipVelocity(
+            Object.assign(endClipVelocity, endVelocity),
+            planes[i],
+            OVERCLIP,
+          );
         }
 
         // see if there is a second plane that the new move enters
@@ -288,16 +301,19 @@ var player_slideMove = (() => {
           }
 
           // slide the original velocity along the crease
-          vec3_crossVectors(dir, planes[i], planes[j]);
-          vec3_normalize(dir);
-          var d = vec3_dot(dir, player.body.velocity);
-          Object.assign(clipVelocity, dir);
-          vec3_multiplyScalar(clipVelocity, d);
+          vec3_multiplyScalar(
+            Object.assign(
+              clipVelocity,
+              vec3_normalize(vec3_crossVectors(dir, planes[i], planes[j])),
+            ),
+            vec3_dot(dir, player.body.velocity),
+          );
 
           if (gravity) {
-            d = vec3_dot(dir, endVelocity);
-            Object.assign(endClipVelocity, dir);
-            vec3_multiplyScalar(endClipVelocity, d);
+            vec3_multiplyScalar(
+              Object.assign(endClipVelocity, dir),
+              vec3_dot(dir, endVelocity),
+            );
           }
 
           // see if there is a third plane that the new move enters
@@ -378,18 +394,25 @@ var player_walkMove = (() => {
     player.viewRight.y = 0;
 
     // project the forward and right directions onto the ground plane
-    pm_clipVelocity(player.viewForward, player_groundTrace_normal, OVERCLIP);
-    pm_clipVelocity(player.viewRight, player_groundTrace_normal, OVERCLIP);
-    //
-    vec3_normalize(player.viewForward);
-    vec3_normalize(player.viewRight);
+    vec3_addScaledVector(
+      vec3_addScaledVector(
+        vec3_setScalar(wishvel, 0),
+        vec3_normalize(
+          pm_clipVelocity(
+            player.viewForward,
+            player_groundTrace_normal,
+            OVERCLIP,
+          ),
+        ),
+        fmove,
+      ),
+      vec3_normalize(
+        pm_clipVelocity(player.viewRight, player_groundTrace_normal, OVERCLIP),
+      ),
+      smove,
+    );
 
-    vec3_setScalar(wishvel, 0);
-    vec3_addScaledVector(wishvel, player.viewForward, fmove);
-    vec3_addScaledVector(wishvel, player.viewRight, smove);
-
-    Object.assign(wishdir, wishvel);
-    var wishspeed = vec3_length(wishdir);
+    var wishspeed = vec3_length(Object.assign(wishdir, wishvel));
     vec3_normalize(wishdir);
     wishspeed *= scale;
 
@@ -422,12 +445,16 @@ var player_airMove = (() => {
     // project moves down to flat plane
     player.viewForward.y = 0;
     player.viewRight.y = 0;
-    vec3_normalize(player.viewForward);
-    vec3_normalize(player.viewRight);
 
-    vec3_setScalar(wishvel, 0);
-    vec3_addScaledVector(wishvel, player.viewForward, fmove);
-    vec3_addScaledVector(wishvel, player.viewRight, smove);
+    vec3_addScaledVector(
+      vec3_addScaledVector(
+        vec3_setScalar(wishvel, 0),
+        vec3_normalize(player.viewForward),
+        fmove,
+      ),
+      vec3_normalize(player.viewRight),
+      smove,
+    );
     wishvel.y = 0;
 
     Object.assign(wishdir, wishvel);

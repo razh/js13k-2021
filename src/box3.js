@@ -35,11 +35,12 @@ export var box3_expandByPoint = (box, point) => {
 export var box3_expandByObject = (box, object) => {
   object3d_updateWorldMatrix(object);
   object3d_traverse(object, node =>
-    node.geometry?.vertices.map(vertex => {
-      Object.assign(_vector, vertex);
-      vec3_applyMatrix4(_vector, node.matrixWorld);
-      box3_expandByPoint(box, _vector);
-    }),
+    node.geometry?.vertices.map(vertex =>
+      box3_expandByPoint(
+        box,
+        vec3_applyMatrix4(Object.assign(_vector, vertex), node.matrixWorld),
+      ),
+    ),
   );
   return box;
 };
@@ -77,6 +78,9 @@ export var box3_overlapsBox = (a, b) =>
     a.max.y <= b.min.y || a.min.y >= b.max.y ||
     a.max.z <= b.min.z || a.min.z >= b.max.z
   );
+
+export var box3_union = (a, b) =>
+  box3_expandByPoint(box3_expandByPoint(a, b.min), b.max);
 
 export var box3_translate = (box, offset) => {
   vec3_add(box.min, offset);

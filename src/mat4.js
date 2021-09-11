@@ -30,17 +30,12 @@ export var mat4_makeRotationFromQuaternion = (m, q) =>
   mat4_compose(m, _zero, q, _one);
 
 export var mat4_lookAt = (m, eye, target, up) => {
-  vec3_subVectors(_z, eye, target);
-
-  if (!vec3_length(_z)) {
+  if (!vec3_length(vec3_subVectors(_z, eye, target))) {
     // eye and target are in the same position
     _z.z = 1;
   }
 
-  vec3_normalize(_z);
-  vec3_crossVectors(_x, up, _z);
-
-  if (!vec3_length(_x)) {
+  if (!vec3_length(vec3_crossVectors(_x, up, vec3_normalize(_z)))) {
     // up and z are parallel
     if (Math.abs(up.z) === 1) {
       _z.x += 0.0001;
@@ -48,12 +43,10 @@ export var mat4_lookAt = (m, eye, target, up) => {
       _z.z += 0.0001;
     }
 
-    vec3_normalize(_z);
-    vec3_crossVectors(_x, up, _z);
+    vec3_crossVectors(_x, up, vec3_normalize(_z));
   }
 
-  vec3_normalize(_x);
-  vec3_crossVectors(_y, _z, _x);
+  vec3_crossVectors(_y, _z, vec3_normalize(_x));
 
   m[0] = _x.x;
   m[4] = _y.x;

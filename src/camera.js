@@ -25,8 +25,10 @@ export var camera_create = (fov = 60, aspect = 1, near = 0.1, far = 2000) => {
 };
 
 export var camera_lookAt = (camera, vector) => {
-  mat4_lookAt(_m1, camera.position, vector, camera.up);
-  quat_setFromRotationMatrix(camera.quaternion, _m1);
+  quat_setFromRotationMatrix(
+    camera.quaternion,
+    mat4_lookAt(_m1, camera.position, vector, camera.up),
+  );
 };
 
 export var camera_updateProjectionMatrix = camera => {

@@ -266,8 +266,12 @@ export var physics_update = (() => {
             body = bodyA;
           }
 
-          physics_setBoxFromBody(box, body);
-          if (box3_containsPoint(box, bullet.parent.position)) {
+          if (
+            box3_containsPoint(
+              physics_setBoxFromBody(box, body),
+              bullet.parent.position,
+            )
+          ) {
             if (bullet.collide(body.parent) === false) {
               continue;
             }
@@ -275,10 +279,12 @@ export var physics_update = (() => {
         }
 
         // Two dynamic bodies, or one static and one dynamic body.
-        physics_setBoxFromBody(boxA, bodyA);
-        physics_setBoxFromBody(boxB, bodyB);
-
-        if (box3_overlapsBox(boxA, boxB)) {
+        if (
+          box3_overlapsBox(
+            physics_setBoxFromBody(boxA, bodyA),
+            physics_setBoxFromBody(boxB, bodyB),
+          )
+        ) {
           // Handle case when bullet box overlaps, but not the point.
           if (
             bodyA.collide(bodyB.parent) === false ||

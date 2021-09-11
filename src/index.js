@@ -158,13 +158,15 @@ var getBufferGeom = geometry => {
 var renderShadow = mesh => {
   var { geometry } = mesh;
 
-  mat4_multiplyMatrices(
-    mesh.modelViewMatrix,
-    directional.shadow.camera.matrixWorldInverse,
-    mesh.matrixWorld,
+  setMat4Uniform(
+    gl,
+    depthUniforms.modelViewMatrix,
+    mat4_multiplyMatrices(
+      mesh.modelViewMatrix,
+      directional.shadow.camera.matrixWorldInverse,
+      mesh.matrixWorld,
+    ),
   );
-
-  setMat4Uniform(gl, depthUniforms.modelViewMatrix, mesh.modelViewMatrix);
   setMat4Uniform(
     gl,
     depthUniforms.projectionMatrix,
@@ -196,15 +198,17 @@ var renderMesh = mesh => {
   setFloatUniform(gl, uniforms.shininess, material.shininess);
   setVec3Uniform(gl, uniforms.emissive, material.emissive);
 
-  mat4_multiplyMatrices(
-    mesh.modelViewMatrix,
-    camera.matrixWorldInverse,
-    mesh.matrixWorld,
-  );
-
   gl.uniform1i(uniforms.receiveShadow, mesh.receiveShadow);
   setMat4Uniform(gl, uniforms.modelMatrix, mesh.matrixWorld);
-  setMat4Uniform(gl, uniforms.modelViewMatrix, mesh.modelViewMatrix);
+  setMat4Uniform(
+    gl,
+    uniforms.modelViewMatrix,
+    mat4_multiplyMatrices(
+      mesh.modelViewMatrix,
+      camera.matrixWorldInverse,
+      mesh.matrixWorld,
+    ),
+  );
   setMat4Uniform(gl, uniforms.projectionMatrix, camera.projectionMatrix);
 
   var bufferGeom = getBufferGeom(geometry);

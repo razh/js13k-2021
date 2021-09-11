@@ -23,7 +23,6 @@ var _normal = vec3_create();
 var _inverseMatrix = mat4_create();
 
 var _intersectionPoint = vec3_create();
-var _intersectionPointWorld = vec3_create();
 
 export var ray_create = (
   origin = vec3_create(),
@@ -91,9 +90,11 @@ export var ray_intersectBox = (ray, box, target) => {
 export var ray_intersectTriangle = (ray, a, b, c, target) => {
   // Compute the offset origin, edges, and normal.
   // from http://www.geometrictools.com/GTEngine/Include/Mathematics/GteIntrRay3Triangle3.h
-  vec3_subVectors(_edge1, b, a);
-  vec3_subVectors(_edge2, c, a);
-  vec3_crossVectors(_normal, _edge1, _edge2);
+  vec3_crossVectors(
+    _normal,
+    vec3_subVectors(_edge1, b, a),
+    vec3_subVectors(_edge2, c, a),
+  );
 
   // Solve Q + t*D = b1*E1 + b2*E2 (Q = kDiff, D = ray direction,
   // E1 = kEdge1, E2 = kEdge2, N = Cross(E1,E2)) by
@@ -151,10 +152,7 @@ var checkIntersection = (object, ray, a, b, c, point) => {
     return;
   }
 
-  Object.assign(_intersectionPointWorld, point);
-  vec3_applyMatrix4(_intersectionPointWorld, object.matrixWorld);
-
-  return vec3_clone(_intersectionPointWorld);
+  return vec3_applyMatrix4(vec3_clone(point), object.matrixWorld);
 };
 
 var _ray = ray_create();
@@ -163,8 +161,7 @@ export var ray_intersectMesh = (ray, object) => {
   var intersections = [];
 
   _inverseMatrix.set(object.matrixWorld);
-  mat4_invert(_inverseMatrix);
-  ray_applyMatrix4(ray_copy(_ray, ray), _inverseMatrix);
+  ray_applyMatrix4(ray_copy(_ray, ray), mat4_invert(_inverseMatrix));
 
   var { vertices, faces } = object.geometry;
 
