@@ -16,6 +16,7 @@ import {
   bridge_create,
   column_create,
   dreadnought_create,
+  explosion_create,
   phantom_create,
   platform_create,
   scanner_create,
@@ -293,6 +294,12 @@ export var map0 = (gl, scene, camera) => {
   enemyMesh.receiveShadow = true;
   object3d_add(map, enemyMesh);
 
+  var createExplosion = position => {
+    var explosion = explosion_create(4);
+    Object.assign(explosion.position, position);
+    object3d_add(map, explosion);
+  };
+
   var bulletInterval = interval_create(0.1);
 
   entity_add(
@@ -378,6 +385,7 @@ export var map0 = (gl, scene, camera) => {
 
         bulletPhysics.collide = entity => {
           if (entity === playerMesh) return false;
+          createExplosion(bullet.position);
           object3d_remove(map, bullet);
         };
       }
