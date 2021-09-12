@@ -1,8 +1,9 @@
-import { playShoot } from './audio.js';
+import { findTarget, getRange, RANGE_MELEE } from './ai.js';
+import { playEnemyDeath, playShoot } from './audio.js';
 import { boxGeom_create } from './boxGeom.js';
 import { ny, py } from './boxIndices.js';
 import { $scale, align } from './boxTransforms.js';
-import { DEBUG } from './constants.js';
+import { DEBUG, gravity } from './constants.js';
 import { light_create } from './directionalLight.js';
 import { component_create, entity_add } from './entity.js';
 import { interval_create } from './interval.js';
@@ -14,6 +15,7 @@ import {
   box,
   bridge_create,
   column_create,
+  disintegration_create,
   dreadnought_create,
   explosion_create,
   phantom_create,
@@ -39,7 +41,12 @@ import {
   physics_bodies,
   physics_update,
 } from './physics.js';
-import { player_create, player_update } from './player.js';
+import {
+  body_trace,
+  player_create,
+  player_update,
+  trace_create,
+} from './player.js';
 import {
   quat_create,
   quat_rotateTowards,
@@ -60,7 +67,6 @@ import {
   vec3_setLength,
   vec3_setScalar,
   vec3_subVectors,
-  vec3_X,
   vec3_Y,
   vec3_Z,
 } from './vec3.js';
@@ -200,15 +206,17 @@ export var map0 = (gl, scene, camera) => {
   object3d_rotateZ(dreadnoughtMesh, -Math.PI / 4);
   object3d_add(map, dreadnoughtMesh);
 
-  var phantomMaterial = material_create();
-  var phantomMesh = physics_add(
-    mesh_create(phantom_create(), phantomMaterial),
-    BODY_STATIC,
-  );
-  vec3_setScalar(phantomMaterial.color, 0.5);
-  vec3_setScalar(phantomMaterial.specular, 1);
-  phantomMesh.castShadow = true;
-  phantomMesh.receiveShadow = true;
+  var createPhantom = () => {
+    var phantomMaterial = material_create();
+    var phantomMesh = mesh_create(phantom_create(), phantomMaterial);
+    vec3_setScalar(phantomMaterial.color, 0.5);
+    vec3_setScalar(phantomMaterial.specular, 1);
+    phantomMesh.castShadow = true;
+    phantomMesh.receiveShadow = true;
+    return phantomMesh;
+  };
+
+  var phantomMesh = physics_add(createPhantom(), BODY_STATIC);
   vec3_set(phantomMesh.position, -128, 0, -64);
   object3d_add(map, phantomMesh);
   entity_add(
@@ -220,13 +228,21 @@ export var map0 = (gl, scene, camera) => {
   var enemyHealth_create = (enemy, initialHealth) => {
     var health = initialHealth;
     var hitTimeout;
-    get_physics_component(enemy).collide = entity => {
+    var enemyPhysics = get_physics_component(enemy);
+    enemyPhysics.collide = entity => {
       var entityPhysics = get_physics_component(entity).physics;
       if (entityPhysics === BODY_BULLET) {
         health--;
         clearTimeout(hitTimeout);
         if (health <= 0) {
+          playEnemyDeath();
           createExplosion(enemy.position);
+          var disintegration = disintegration_create(
+            enemyPhysics.boundingBox,
+            16,
+          );
+          Object.assign(disintegration.position, enemy.position);
+          object3d_add(map, disintegration);
           object3d_remove(map, enemy);
         } else {
           enemy.material.emissive.x = 1;
@@ -234,6 +250,7 @@ export var map0 = (gl, scene, camera) => {
         }
       }
     };
+    return enemy;
   };
   enemyHealth_create(phantomMesh, 10);
 
@@ -257,28 +274,77 @@ export var map0 = (gl, scene, camera) => {
   );
   enemyHealth_create(scannerMesh, 5);
 
-  var enemyWidth = 0.8 * playerWidth;
-  var enemyHeight = 0.8 * playerHeight;
-  var enemyMaterial = material_create();
-  Object.assign(enemyMaterial.color, vec3_X);
+  var ENEMY_STATE_PATROL = 0;
+  var ENEMY_STATE_HUNT = 1;
+  var ENEMY_STATE_SHOOT = 2;
+  var ENEMY_STATE_MELEE = 3;
+
+  var enemyState = ENEMY_STATE_PATROL;
+  var enemyPositionStart = vec3_create();
+  var enemyPositionEnd = vec3_create();
+  var enemyTrace = trace_create();
+
   var enemyMesh = entity_add(
-    physics_add(
-      mesh_create(
-        box([enemyWidth, enemyHeight, enemyWidth], align(ny)),
-        enemyMaterial,
-      ),
-      BODY_DYNAMIC,
-    ),
+    enemyHealth_create(physics_add(createPhantom(), BODY_DYNAMIC), 10),
     component_create(dt => {
+      var wishSpeed = 160;
+
       var enemyPhysics = get_physics_component(enemyMesh);
-      enemyPhysics.velocity.y -= 800 * dt;
-      var wishDirection = vec3_subVectors(
-        _v0,
-        playerMesh.position,
-        enemyMesh.position,
-      );
-      if (vec3_length(wishDirection) > 256) return;
+      vec3_addScaledVector(enemyPhysics.velocity, gravity, dt);
+      var wishDirection = findTarget(enemyMesh, playerMesh)
+        ? vec3_subVectors(_v0, playerMesh.position, enemyMesh.position)
+        : vec3_setScalar(_v0, 0);
+      wishDirection.y = 0;
       vec3_normalize(wishDirection);
+
+      // Look at enemy.
+      if (vec3_length(wishDirection)) {
+        quat_setFromAxisAngle(
+          _q0,
+          vec3_Y,
+          Math.atan2(wishDirection.x, wishDirection.z),
+        );
+        quat_rotateTowards(enemyMesh.quaternion, _q0, Math.PI * dt);
+
+        // Check if there's ground.
+        vec3_setLength(Object.assign(_v1, wishDirection), wishSpeed);
+        vec3_addScaledVector(
+          Object.assign(enemyPositionStart, enemyMesh.position),
+          _v1,
+          // 16 frames ahead.
+          16 * dt,
+        );
+        Object.assign(enemyPositionEnd, enemyPositionStart);
+        enemyPositionEnd.y -= 0.25;
+        body_trace(
+          staticBodies,
+          enemyPhysics,
+          enemyTrace,
+          enemyPositionStart,
+          enemyPositionEnd,
+        );
+
+        if (DEBUG) {
+          var startMaterial = material_create();
+          var endMaterial = material_create();
+          vec3_set(startMaterial.emissive, 0, 1, 0);
+          vec3_set(endMaterial.emissive, 1, 1, 0);
+          var startTarget = mesh_create(box([2, 2, 2]), startMaterial);
+          var endTarget = mesh_create(box([2, 2, 2]), endMaterial);
+          Object.assign(startTarget.position, enemyPositionStart);
+          Object.assign(endTarget.position, enemyPositionEnd);
+          object3d_add(map, startTarget);
+          object3d_add(map, endTarget);
+          setTimeout(() => object3d_remove(map, startTarget), 32);
+          setTimeout(() => object3d_remove(map, endTarget), 32);
+
+          if (!enemyTrace.allsolid) {
+            vec3_setScalar(wishDirection, 0);
+          }
+        }
+      }
+
+      // Move towards player.
       var accel = 10;
       var stopSpeed = 100;
       var friction = 6;
@@ -290,22 +356,15 @@ export var map0 = (gl, scene, camera) => {
       vec3_setLength(enemyPhysics.velocity, newSpeed);
       var currentSpeed = vec3_dot(enemyPhysics.velocity, wishDirection);
       enemyPhysics.velocity.y = y;
-      var wishSpeed = 160;
       var addSpeed = wishSpeed - currentSpeed;
       if (addSpeed <= 0) return;
       var accelSpeed = Math.min(accel * dt * wishSpeed, addSpeed);
-      vec3_addScaledVector(enemyPhysics.velocity, wishDirection, accelSpeed);
-      quat_setFromAxisAngle(
-        _q0,
-        vec3_Y,
-        Math.atan2(wishDirection.x, wishDirection.z),
-      );
-      quat_rotateTowards(enemyMesh.quaternion, _q0, 12 * dt);
+      if (getRange(enemyMesh, playerMesh) !== RANGE_MELEE) {
+        vec3_addScaledVector(enemyPhysics.velocity, wishDirection, accelSpeed);
+      }
     }),
   );
   vec3_set(enemyMesh.position, 128, 32, -640);
-  enemyMesh.castShadow = true;
-  enemyMesh.receiveShadow = true;
   object3d_add(map, enemyMesh);
 
   var createExplosion = position => {
@@ -316,10 +375,14 @@ export var map0 = (gl, scene, camera) => {
 
   var bulletInterval = interval_create(0.1);
 
+  var bodies;
+  var staticBodies;
+
   entity_add(
     map,
     component_create(dt => {
-      var bodies = physics_bodies(map);
+      bodies = physics_bodies(map);
+      staticBodies = bodies.filter(body => body.physics === BODY_STATIC);
       physics_update(bodies);
       player.dt = dt;
 

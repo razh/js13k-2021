@@ -43,7 +43,7 @@ import {
   extrude,
   relativeAlign,
 } from './boxTransforms.js';
-import { DEBUG } from './constants.js';
+import { DEBUG, gravity } from './constants.js';
 import { component_create, entity_add } from './entity.js';
 import { geom_create, merge, translate } from './geom.js';
 import { mat4_create, mat4_lookAt, mat4_setPosition } from './mat4.js';
@@ -78,7 +78,6 @@ import {
 } from './vec3.js';
 
 var EPSILON = 1e-2;
-var gravity = vec3_create(0, -800, 0);
 
 var _vector = vec3_create();
 
@@ -429,7 +428,6 @@ export var phantom_create = () => {
   var height = 72;
   var depth = 16;
   var gap = 4;
-  var y = 8;
 
   var sideWidth = (width - gap) / 2;
   var sideHeight = 56;
@@ -488,7 +486,7 @@ export var phantom_create = () => {
     translate(0, sideHeight - gap / 2, -depth / 4),
   );
 
-  return translate(0, y, 0)(mergeAll(head, rightSide, leftSide, eye));
+  return mergeAll(head, rightSide, leftSide, eye);
 };
 
 export var platform_create = (width, height, depth, strokeWidth) => {
