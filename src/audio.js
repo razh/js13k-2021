@@ -160,7 +160,18 @@ destination.connect(convolver).connect(wet).connect(audioContext.destination);
 
 var play = sound => playSound(sound, destination);
 
-var shoot = generateNotes(mul(noise, decay(24)), 0.5, 1);
-export var playShoot = () => play(shoot[0]);
+var shoot = generateNotes(mul(mul(saw, noise), decay(24)), 0.5, 1);
+export var playShoot = () => play(shoot[16]);
+
+var enemyDeath = generateNotes(
+  mul(
+    mul(saw, pitchJump(square, toFreq(27) - toFreq(15), 0.1)),
+    adsr(0.001, 0.3, 0.4, 0.3, 0.7),
+  ),
+  1,
+  0.4,
+)[15];
+export var playEnemyDeath = () => play(enemyDeath);
+
 
 addEventListener('click', () => audioContext.resume(), { once: true });
