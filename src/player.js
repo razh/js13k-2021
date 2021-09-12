@@ -1,7 +1,6 @@
 import {
   box3_copy,
   box3_create,
-  box3_expandByPoint,
   box3_overlapsBox,
   box3_translate,
   box3_union,
@@ -81,7 +80,7 @@ export var player_update = player => {
   player_checkGround(player);
 };
 
-var trace_create = () => ({
+export var trace_create = () => ({
   allsolid: false,
   fraction: 1,
   endpos: vec3_create(),
@@ -105,7 +104,7 @@ var trace_reset = (() => {
   };
 })();
 
-var player_trace = (() => {
+export var body_trace = (() => {
   var boxA = box3_create();
   var boxB = box3_create();
   var sweptBoxA = box3_create();
@@ -114,45 +113,48 @@ var player_trace = (() => {
   var velocity = vec3_create();
   var _trace = trace_create();
 
-  return (player, trace, start, end) => {
+  return (bodies, bodyA, trace, start, end) => {
     trace_reset(trace);
 
-    var bodies = physics_bodies(player.scene).filter(
-      body => body !== player.body && body.physics !== BODY_BULLET,
-    );
-
-    Object.assign(originalVelocity, player.body.velocity);
-    Object.assign(player.body.velocity, vec3_subVectors(velocity, end, start));
+    Object.assign(originalVelocity, bodyA.velocity);
+    Object.assign(bodyA.velocity, vec3_subVectors(velocity, end, start));
 
     box3_union(
-      box3_translate(box3_copy(sweptBoxA, player.body.boundingBox), end),
-      box3_translate(box3_copy(boxA, player.body.boundingBox), start),
+      box3_translate(box3_copy(sweptBoxA, bodyA.boundingBox), end),
+      box3_translate(box3_copy(boxA, bodyA.boundingBox), start),
     );
 
     for (var i = 0; i < bodies.length; i++) {
-      var body = bodies[i];
+      var bodyB = bodies[i];
       if (
         !box3_overlapsBox(
           sweptBoxA,
           box3_translate(
-            box3_copy(boxB, body.boundingBox),
-            body.parent.position,
+            box3_copy(boxB, bodyB.boundingBox),
+            bodyB.parent.position,
           ),
         )
       ) {
         continue;
       }
 
-      sweptAABB(trace_reset(_trace), player.body, body, boxA, boxB);
+      sweptAABB(trace_reset(_trace), bodyA, bodyB, boxA, boxB);
       if (_trace.fraction < trace.fraction) {
         trace_copy(trace, _trace);
       }
     }
 
-    Object.assign(player.body.velocity, originalVelocity);
+    Object.assign(bodyA.velocity, originalVelocity);
     vec3_lerpVectors(trace.endpos, start, end, trace.fraction);
   };
 })();
+
+var player_trace = (player, trace, start, end) => {
+  var bodies = physics_bodies(player.scene).filter(
+    body => body !== player.body && body.physics !== BODY_BULLET,
+  );
+  body_trace(bodies, player.body, trace, start, end);
+};
 
 var MAX_CLIP_PLANES = 5;
 
