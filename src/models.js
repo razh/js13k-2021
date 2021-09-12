@@ -126,7 +126,7 @@ export var column_create = () => {
   return mergeAll(base, middle, top);
 };
 
-var disintegrationGeometry = boxGeom_create(0.5, 1, 0.5);
+var disintegrationGeometry = boxGeom_create(1, 1, 1);
 var disintegrationMaterial = material_create();
 vec3_setScalar(disintegrationMaterial.emissive, 1);
 
@@ -135,15 +135,20 @@ vec3_setScalar(disintegrationCoreMaterial.color, 0);
 
 export var disintegration_create = (boundingBox, count) => {
   var disintegration = object3d_create();
-  var decay = 6;
+  var decay = 5;
   var center = box3_getCenter(boundingBox, vec3_create());
   var size = box3_getSize(boundingBox, vec3_create());
+  var strokeWidth = 2;
 
   var velocities = [...Array(count)].map(() => {
     var sprite = mesh_create(disintegrationGeometry, disintegrationMaterial);
     sprite.castShadow = true;
-    vec3_setScalar(sprite.scale, randFloat(8, 2 * Math.max(size.x, size.z)));
-    sprite.scale.x = -sprite.scale.x;
+    vec3_set(
+      sprite.scale,
+      randFloat(4, size.x),
+      randFloat(4, 2 * size.y),
+      randFloat(4, size.z),
+    );
     vec3_set(
       sprite.position,
       randFloatSpread(0.5),
@@ -154,11 +159,17 @@ export var disintegration_create = (boundingBox, count) => {
       disintegrationGeometry,
       disintegrationCoreMaterial,
     );
-    vec3_setScalar(spriteCore.scale, 0.8, 0.9, 0.8);
+    vec3_set(
+      spriteCore.scale,
+      1 - strokeWidth / sprite.scale.x,
+      1 - strokeWidth / sprite.scale.y,
+      1 - strokeWidth / sprite.scale.z,
+    );
+    sprite.scale.x *= -1;
     object3d_add(sprite, spriteCore);
     vec3_add(vec3_multiply(sprite.position, size), center);
     object3d_add(disintegration, sprite);
-    return vec3_create(0, randFloat(32, 128), 0);
+    return vec3_create(0, randFloat(32, 256), 0);
   });
 
   return entity_add(
