@@ -32,6 +32,7 @@ import {
   object3d_rotateY,
   object3d_rotateZ,
 } from './object3d.js';
+import { orthoCamera_updateProjectionMatrix } from './orthoCamera.js';
 import {
   BODY_BULLET,
   BODY_DYNAMIC,
@@ -56,6 +57,7 @@ import { ray_create, ray_intersectObjects } from './ray.js';
 import {
   vec3_add,
   vec3_addScaledVector,
+  vec3_applyMatrix4,
   vec3_applyQuaternion,
   vec3_create,
   vec3_cross,
@@ -86,12 +88,6 @@ export var map0 = (gl, scene, camera) => {
   var ambient = vec3_create(0.2, 0.2, 0.3);
 
   var directional = light_create(vec3_create(1, 1, 1));
-  Object.assign(directional.shadow.camera, {
-    left: -512,
-    right: 512,
-    top: 512,
-    bottom: -512,
-  });
   vec3_set(directional.position, 64, 256, -64);
   object3d_add(map, directional);
 
@@ -120,6 +116,23 @@ export var map0 = (gl, scene, camera) => {
   playerPhysics.update = () => {};
   var player = player_create(playerMesh, playerPhysics);
   player.scene = map;
+
+  var updateShadowCamera = () => {
+    var offset = 512;
+    var cameraPosition = vec3_applyMatrix4(
+      Object.assign(_v0, cameraObject.position),
+      directional.shadow.camera.matrixWorldInverse,
+    );
+    Object.assign(directional.shadow.camera, {
+      left: cameraPosition.x - offset,
+      right: cameraPosition.x + offset,
+      top: cameraPosition.y + offset,
+      bottom: cameraPosition.y - offset,
+    });
+    // HACK: Reduce shadow jitter.
+    orthoCamera_updateProjectionMatrix(directional.shadow.camera);
+  };
+  updateShadowCamera();
 
   var createStaticMeshFromGeometry = geometry => {
     var material = material_create();
@@ -410,6 +423,8 @@ export var map0 = (gl, scene, camera) => {
 
       player_update(player);
       Object.assign(cameraObject.position, playerMesh.position);
+
+      updateShadowCamera();
 
       if (bulletInterval(dt, isMouseDown)) {
         playShoot();
