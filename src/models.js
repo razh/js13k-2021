@@ -1,3 +1,4 @@
+import { box3_getCenter, box3_getSize } from './box3.js';
 import { colors, faceColors } from './boxColors.js';
 import { boxGeom_create } from './boxGeom.js';
 import {
@@ -58,6 +59,7 @@ import {
 import { quat_create, quat_setFromEuler } from './quat.js';
 import { flow, sample } from './utils.js';
 import {
+  vec3_add,
   vec3_addScaledVector,
   vec3_applyMatrix4,
   vec3_applyQuaternion,
@@ -65,6 +67,7 @@ import {
   vec3_create,
   vec3_cross,
   vec3_length,
+  vec3_multiply,
   vec3_multiplyScalar,
   vec3_normalize,
   vec3_set,
@@ -75,6 +78,7 @@ import {
 } from './vec3.js';
 
 var EPSILON = 1e-2;
+var gravity = vec3_create(0, -800, 0);
 
 var _vector = vec3_create();
 
@@ -120,6 +124,62 @@ export var column_create = () => {
   )();
 
   return mergeAll(base, middle, top);
+};
+
+var disintegrationGeometry = boxGeom_create(0.5, 1, 0.5);
+var disintegrationMaterial = material_create();
+vec3_setScalar(disintegrationMaterial.emissive, 1);
+
+var disintegrationCoreMaterial = material_create();
+vec3_setScalar(disintegrationCoreMaterial.color, 0);
+
+export var disintegration_create = (boundingBox, count) => {
+  var disintegration = object3d_create();
+  var decay = 6;
+  var center = box3_getCenter(boundingBox, vec3_create());
+  var size = box3_getSize(boundingBox, vec3_create());
+
+  var velocities = [...Array(count)].map(() => {
+    var sprite = mesh_create(disintegrationGeometry, disintegrationMaterial);
+    sprite.castShadow = true;
+    vec3_setScalar(sprite.scale, randFloat(8, 2 * Math.max(size.x, size.z)));
+    sprite.scale.x = -sprite.scale.x;
+    vec3_set(
+      sprite.position,
+      randFloatSpread(0.5),
+      randFloatSpread(0.5),
+      randFloatSpread(0.5),
+    );
+    var spriteCore = mesh_create(
+      disintegrationGeometry,
+      disintegrationCoreMaterial,
+    );
+    vec3_setScalar(spriteCore.scale, 0.8, 0.9, 0.8);
+    object3d_add(sprite, spriteCore);
+    vec3_add(vec3_multiply(sprite.position, size), center);
+    object3d_add(disintegration, sprite);
+    return vec3_create(0, randFloat(32, 128), 0);
+  });
+
+  return entity_add(
+    disintegration,
+    component_create(dt => {
+      var visibleCount = 0;
+
+      disintegration.children.map((sprite, index) => {
+        vec3_addScaledVector(sprite.position, velocities[index], dt);
+        vec3_multiplyScalar(sprite.scale, 1 - decay * dt);
+
+        if (vec3_length(sprite.scale) > EPSILON) {
+          visibleCount++;
+        }
+      });
+
+      if (!visibleCount) {
+        object3d_remove(disintegration.parent, disintegration);
+      }
+    }),
+  );
 };
 
 export var dreadnought_create = () => {
@@ -212,7 +272,6 @@ var explosionMaterials = [
   vec3_set(material.emissive, ...color);
   return material;
 });
-var explosionGravity = vec3_create(0, -800, 0);
 
 export var explosion_create = count => {
   var explosion = object3d_create();
@@ -237,7 +296,7 @@ export var explosion_create = count => {
     return velocity;
   });
 
-  explosion = entity_add(
+  return entity_add(
     explosion,
     component_create(dt => {
       var visibleCount = 0;
@@ -245,7 +304,7 @@ export var explosion_create = count => {
       explosion.children.map((sprite, index) => {
         vec3_addScaledVector(
           sprite.position,
-          vec3_addScaledVector(velocities[index], explosionGravity, dt),
+          vec3_addScaledVector(velocities[index], gravity, dt),
           dt,
         );
         vec3_multiplyScalar(sprite.scale, 1 - decay * dt);
@@ -260,8 +319,6 @@ export var explosion_create = count => {
       }
     }),
   );
-
-  return explosion;
 };
 
 export var greeble_create = (() => {
