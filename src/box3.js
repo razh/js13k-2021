@@ -1,10 +1,14 @@
 import { object3d_traverse, object3d_updateWorldMatrix } from './object3d.js';
 import {
   vec3_add,
+  vec3_addVectors,
   vec3_applyMatrix4,
   vec3_create,
   vec3_max,
   vec3_min,
+  vec3_multiplyScalar,
+  vec3_setScalar,
+  vec3_subVectors,
 } from './vec3.js';
 
 var _vector = vec3_create();
@@ -25,6 +29,19 @@ export var box3_makeEmpty = box => {
   box.max.x = box.max.y = box.max.z -= Infinity;
   return box;
 };
+
+export var box3_isEmpty = box =>
+  box.max.x < box.min.x || box.max.y < box.min.y || box.max.z < box.min.z;
+
+export var box3_getCenter = (box, target) =>
+  box3_isEmpty(box)
+    ? vec3_setScalar(target, 0)
+    : vec3_multiplyScalar(vec3_addVectors(target, box.min, box.max), 0.5);
+
+export var box3_getSize = (box, target) =>
+  box3_isEmpty(box)
+    ? vec3_setScalar(target, 0)
+    : vec3_subVectors(target, box.max, box.min);
 
 export var box3_expandByPoint = (box, point) => {
   vec3_min(box.min, point);
