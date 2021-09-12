@@ -20,6 +20,7 @@ import {
   platform_create,
   scanner_create,
   starfield_create,
+  turret_create,
 } from './models.js';
 import {
   object3d_add,
@@ -199,6 +200,17 @@ export var map0 = (gl, scene, camera) => {
   object3d_rotateX(dreadnoughtMesh, -Math.PI / 8);
   object3d_rotateZ(dreadnoughtMesh, -Math.PI / 4);
   object3d_add(map, dreadnoughtMesh);
+
+  if (DEBUG) {
+    var turretMesh = mesh_create(turret_create(), material_create());
+    turretMesh.castShadow = true;
+    vec3_set(turretMesh.position, -128, 192, -256);
+    object3d_lookAt(
+      turretMesh,
+      Object.assign(_v0, dreadnoughtMesh.position, { y: 192 }),
+    );
+    object3d_add(map, turretMesh);
+  }
 
   var phantomMaterial = material_create();
   var phantomMesh = physics_add(

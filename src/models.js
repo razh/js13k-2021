@@ -17,6 +17,7 @@ import {
   nx_py_pz,
   nx_pz,
   ny,
+  ny_nz,
   ny_pz,
   nz,
   px,
@@ -44,7 +45,7 @@ import {
 } from './boxTransforms.js';
 import { DEBUG } from './constants.js';
 import { component_create, entity_add } from './entity.js';
-import { geom_create, merge, translate } from './geom.js';
+import { geom_applyQuaternion, geom_create, merge, translate } from './geom.js';
 import { mat4_create, mat4_lookAt, mat4_setPosition } from './mat4.js';
 import { material_create } from './material.js';
 import { randFloat, randFloatSpread } from './math.js';
@@ -405,17 +406,16 @@ export var phantom_create = () => {
     ),
   );
 
-  var eyeRotation = quat_setFromEuler(
-    quat_create(),
-    vec3_create(Math.PI / 4, -Math.PI / 4, 0),
-  );
-
   var eye = box(
     [eyeSize, eyeSize, eyeSize],
-    geom => {
-      geom.vertices.map(vertex => vec3_applyQuaternion(vertex, eyeRotation));
-      return geom;
-    },
+    geom =>
+      geom_applyQuaternion(
+        geom,
+        quat_setFromEuler(
+          quat_create(),
+          vec3_create(Math.PI / 4, -Math.PI / 4, 0),
+        ),
+      ),
     faceColors([face_px, eyeColor], [face_py, eyeColor], [face_pz, eyeColor]),
     translate(0, sideHeight - gap / 2, -depth / 4),
   );
@@ -570,4 +570,37 @@ export var starfield_create = (radius, count) => {
   }
 
   return mergeAll(...stars);
+};
+
+export var turret_create = () => {
+  var width = 256;
+  var height = 96;
+  var dx = 48;
+  var dy = 32;
+
+  var barrelLength = 768;
+  var barrelRadius = 24;
+
+  var front = box(
+    [width, height, 256],
+    align(ny_nz),
+    $translate([px_pz, { x: -dx }], [nx_pz, { x: dx }], [py_pz, { y: -dy }]),
+  );
+  var back = box(
+    [width, height, 128],
+    align(ny_pz),
+    $translate([px_nz, { x: -dx }], [nx_nz, { x: dx }], [py_nz, { y: -dy }]),
+  );
+  var barrel = box(
+    [barrelRadius, barrelRadius, barrelLength],
+    geom =>
+      geom_applyQuaternion(
+        geom,
+        quat_setFromEuler(quat_create(), vec3_create(0, 0, Math.PI / 4)),
+      ),
+    align(nz),
+    translate(0, height / 2, 0),
+  );
+
+  return mergeAll(front, back, barrel);
 };

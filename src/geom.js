@@ -2,6 +2,7 @@ import { face3_clone, face3_create } from './face3.js';
 import { rearg } from './utils.js';
 import {
   vec3_add,
+  vec3_applyQuaternion,
   vec3_clone,
   vec3_create,
   vec3_multiply,
@@ -34,6 +35,11 @@ export var geom_push = (geom, vertices, faces) => {
     );
   }
 
+  return geom;
+};
+
+export var geom_applyQuaternion = (geom, q) => {
+  geom.vertices.map(vertex => vec3_applyQuaternion(vertex, q));
   return geom;
 };
 
