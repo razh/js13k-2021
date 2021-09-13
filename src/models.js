@@ -86,6 +86,11 @@ export var box = (dimensions, ...transforms) =>
 
 export var mergeAll = (...geoms) => flow(...geoms.map(merge))(geom_create());
 
+export var spaceBetween = (start, end, count) => {
+  var spacing = (end - start) / (count + 1);
+  return [...Array(count)].map((_, index) => start + spacing * (index + 1));
+};
+
 export var bridge_create = (start, end, width, height) => {
   vec3_subVectors(_vector, end, start);
   var dx = _vector.x;
@@ -102,11 +107,11 @@ export var bridge_create = (start, end, width, height) => {
   );
 };
 
-export var column_create = () => {
-  var columnWidth = 24;
-  var columnHeight = 128;
-  var columnDepth = 16;
-
+export var column_create = (
+  columnWidth,
+  columnHeight,
+  columnDepth = columnWidth,
+) => {
   var base = box(
     [columnDepth, (3 / 16) * columnHeight, columnWidth],
     align(ny),
