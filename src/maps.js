@@ -368,7 +368,7 @@ export var map0 = (gl, scene, camera) => {
   };
 
   var takeDamage = (damage = 2) => {
-    health -= damage;
+    // health -= damage;
     if (health <= 0) {
       document.exitPointerLock();
       document.querySelector('.e').hidden = false;

@@ -1,4 +1,6 @@
+import { DEBUG } from './constants.js';
 import { randFloatSpread } from './math.js';
+import { sample } from './utils.js';
 
 var audioContext = new AudioContext();
 var { sampleRate } = audioContext;
@@ -173,6 +175,14 @@ var jump = generateNotes(
 );
 export var playJump = () => play(jump[31]);
 
+var enemyShoot = (enemyShoot = generateNotes(
+  mul(mul(sin, noise), decay(32)),
+  0.5,
+  0.2,
+));
+export var playEnemyShoot = () =>
+  play(enemyShoot[45 + 0.25 * sample([0, 1, 2, 3, 4, 5])]);
+
 var enemyDeath = generateNotes(
   mul(
     mul(saw, pitchJump(square, toFreq(27) - toFreq(15), 0.1)),
@@ -183,5 +193,32 @@ var enemyDeath = generateNotes(
 );
 export var playEnemyDeath = () => play(enemyDeath[15]);
 
+var drumFn = mul(mul(saw), decay(32));
+var drum0 = generateNotes(drumFn, 2, 1);
+var explosion = generateNotes(mul(mul(tri, square), decay(4)), 1, 1);
+export var playExplosion = () => play(explosion[0]);
+
+if (DEBUG) {
+  addEventListener('keydown', event => {
+    if (event.key === '/') play(drum0[69]);
+    if (event.key === '.') play(explosion[35]);
+    if (event.key === 'm') playEnemyDeath();
+    if (event.key === 'n') playEnemyShoot();
+    if (event.key === 'b')
+      playSound(
+        generateNotes(
+          mul(
+            mul(
+              scale(pitchJump(square, toFreq(65) - toFreq(49), 0.5), 1.5),
+              () => () => 1,
+            ),
+            decay(4),
+          ),
+          2,
+          0.5,
+        )[49],
+      );
+  });
+}
 
 addEventListener('click', () => audioContext.resume(), { once: true });
