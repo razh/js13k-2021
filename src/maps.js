@@ -1,4 +1,4 @@
-import { findTarget, getRange, RANGE_MELEE, RANGE_NEAR } from './ai.js';
+import { findTarget, getRange, isVisible, RANGE_MELEE } from './ai.js';
 import { playEnemyDeath, playShoot } from './audio.js';
 import { boxGeom_create } from './boxGeom.js';
 import { ny, py } from './boxIndices.js';
@@ -333,6 +333,8 @@ export var map0 = (gl, scene, camera) => {
     var PHANTOM_STATE_SHOOT = 3;
     var PHANTOM_STATE_MELEE = 4;
 
+    var PHANTOM_Y = 52;
+
     var state = PHANTOM_STATE_NONE;
     var positionStart = vec3_create();
     var positionEnd = vec3_create();
@@ -438,11 +440,18 @@ export var map0 = (gl, scene, camera) => {
           }
         }
 
-        if (enemyBulletInterval(dt, findTarget(mesh, playerMesh))) {
+        var bulletOrigin = Object.assign(_v1, mesh.position);
+        bulletOrigin.y += PHANTOM_Y;
+        if (
+          enemyBulletInterval(
+            dt,
+            findTarget(mesh, playerMesh) &&
+              isVisible(staticMeshes, bulletOrigin, playerMesh.position),
+          )
+        ) {
           var bullet = fireEnemyBullet();
 
-          vec3_add(bullet.position, mesh.position);
-          bullet.position.y += 52;
+          Object.assign(bullet.position, bulletOrigin);
 
           object3d_lookAt(bullet, playerMesh.position);
           var bulletPhysics = get_physics_component(bullet);
@@ -572,10 +581,17 @@ export var map0 = (gl, scene, camera) => {
           }
         }
 
-        if (enemyBulletInterval(dt, findTarget(mesh, playerMesh))) {
+        var bulletOrigin = Object.assign(_v1, mesh.position);
+        if (
+          enemyBulletInterval(
+            dt,
+            findTarget(mesh, playerMesh) &&
+              isVisible(staticMeshes, bulletOrigin, playerMesh.position),
+          )
+        ) {
           var bullet = fireEnemyBullet();
 
-          vec3_add(bullet.position, mesh.position);
+          Object.assign(bullet.position, bulletOrigin);
 
           object3d_lookAt(bullet, playerMesh.position);
           var bulletPhysics = get_physics_component(bullet);
@@ -649,12 +665,14 @@ export var map0 = (gl, scene, camera) => {
 
   var bodies;
   var staticBodies;
+  var staticMeshes;
 
   entity_add(
     map,
     component_create(dt => {
       bodies = physics_bodies(map);
       staticBodies = bodies.filter(body => body.physics === BODY_STATIC);
+      staticMeshes = staticBodies.map(body => body.parent);
       physics_update(bodies);
       player.dt = dt;
 
