@@ -11,7 +11,7 @@ import { on } from './events.js';
 import { interval_create } from './interval.js';
 import { keys_create } from './keys.js';
 import { material_create } from './material.js';
-import { randFloat, randFloatSpread } from './math.js';
+import { clamp, randFloat, randFloatSpread } from './math.js';
 import { mesh_create } from './mesh.js';
 import {
   box,
@@ -122,6 +122,9 @@ export var map0 = (gl, scene, camera) => {
   var player = player_create(playerMesh, playerPhysics);
   player.scene = map;
 
+  var health = 100;
+  var score = 0;
+
   var updateShadowCamera = () => {
     var offset = 512;
     var cameraPosition = vec3_applyMatrix4(
@@ -227,6 +230,22 @@ export var map0 = (gl, scene, camera) => {
   object3d_rotateZ(dreadnoughtMesh, -Math.PI / 4);
   object3d_add(map, dreadnoughtMesh);
 
+  /*
+  var createHealthPack = () => {
+    var material = material_create();
+    vec3_set(material.emissive, 0.5, 0.5, 2);
+    vec3_setScalar(material.color, 0.5);
+    var mesh = mesh_create(healthPack_create(), material);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    return mesh;
+  };
+
+  var healthPack = createHealthPack();
+  vec3_set(healthPack.position, 0, 0, -128);
+  object3d_add(map, healthPack);
+  */
+
   var createPhantomMesh = () => {
     var material = material_create();
     var mesh = mesh_create(phantom_create(), material);
@@ -324,6 +343,14 @@ export var map0 = (gl, scene, camera) => {
     bullet.castShadow = true;
 
     return bullet;
+  };
+
+  var takeDamage = (damage = 2) => {
+    health -= damage;
+    if (health <= 0) {
+      document.exitPointerLock();
+      document.querySelector('.e').hidden = false;
+    }
   };
 
   var createPhantomEnemy = () => {
@@ -467,6 +494,7 @@ export var map0 = (gl, scene, camera) => {
 
           bulletPhysics.collide = entity => {
             if (entity.isEnemy) return false;
+            if (entity === playerMesh) takeDamage();
             createExplosion(bullet.position);
             object3d_remove(map, bullet);
           };
@@ -475,6 +503,7 @@ export var map0 = (gl, scene, camera) => {
     );
 
     mesh.isEnemy = true;
+    mesh.isPhantom = true;
 
     on(mesh, 'collide', entity => {
       if (get_physics_component(entity).physics === BODY_BULLET) {
@@ -607,6 +636,7 @@ export var map0 = (gl, scene, camera) => {
 
           bulletPhysics.collide = entity => {
             if (entity.isEnemy) return false;
+            if (entity === playerMesh) takeDamage();
             createExplosion(bullet.position);
             object3d_remove(map, bullet);
           };
@@ -617,6 +647,7 @@ export var map0 = (gl, scene, camera) => {
     );
 
     mesh.isEnemy = true;
+    mesh.isScanner = true;
 
     on(mesh, 'collide', entity => {
       if (get_physics_component(entity).physics === BODY_BULLET) {
@@ -703,6 +734,14 @@ export var map0 = (gl, scene, camera) => {
 
       updateShadowCamera();
 
+      health = clamp(health + 1 * dt, 0, 100);
+      document.querySelector('.h').textContent = Math.round(health);
+      document.querySelector('.s').textContent = score;
+
+      if (playerMesh.position.y <= -2048) {
+        takeDamage(100);
+      }
+
       if (bulletInterval(dt, isMouseDown)) {
         playShoot();
 
@@ -753,6 +792,8 @@ export var map0 = (gl, scene, camera) => {
           if (entity === playerMesh) return false;
           createExplosion(bullet.position);
           object3d_remove(map, bullet);
+          if (entity.isPhantom) score += 100;
+          if (entity.isScanner) score += 50;
         };
       }
     }),
