@@ -260,6 +260,7 @@ export var map0 = (gl, scene, camera) => {
             16,
           );
           Object.assign(disintegration.position, enemy.position);
+          Object.assign(disintegration.quaternion, enemy.quaternion);
           object3d_add(map, disintegration);
           object3d_remove(map, enemy);
         } else {
@@ -282,7 +283,6 @@ export var map0 = (gl, scene, camera) => {
   vec3_set(scannerMesh.position, -64, 52, -128);
   scannerMesh.castShadow = true;
   scannerMesh.receiveShadow = true;
-  object3d_rotateZ(scannerMesh, Math.PI / 4);
   object3d_add(map, scannerMesh);
   entity_add(
     scannerMesh,

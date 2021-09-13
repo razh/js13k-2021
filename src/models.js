@@ -45,7 +45,7 @@ import {
 } from './boxTransforms.js';
 import { DEBUG, gravity } from './constants.js';
 import { component_create, entity_add } from './entity.js';
-import { geom_create, merge, translate } from './geom.js';
+import { geom_applyQuaternion, geom_create, merge, translate } from './geom.js';
 import { mat4_create, mat4_lookAt, mat4_setPosition } from './mat4.js';
 import { material_create } from './material.js';
 import { randFloat, randFloatSpread } from './math.js';
@@ -62,7 +62,6 @@ import {
   vec3_add,
   vec3_addScaledVector,
   vec3_applyMatrix4,
-  vec3_applyQuaternion,
   vec3_clone,
   vec3_create,
   vec3_cross,
@@ -79,6 +78,7 @@ import {
 
 var EPSILON = 1e-2;
 
+var _quat = quat_create();
 var _vector = vec3_create();
 
 export var box = (dimensions, ...transforms) =>
@@ -471,17 +471,16 @@ export var phantom_create = () => {
     ),
   );
 
-  var eyeRotation = quat_setFromEuler(
-    quat_create(),
-    vec3_create(Math.PI / 4, -Math.PI / 4, 0),
-  );
-
   var eye = box(
     [eyeSize, eyeSize, eyeSize],
-    geom => {
-      geom.vertices.map(vertex => vec3_applyQuaternion(vertex, eyeRotation));
-      return geom;
-    },
+    geom =>
+      geom_applyQuaternion(
+        geom,
+        quat_setFromEuler(
+          _quat,
+          vec3_set(_vector, Math.PI / 4, -Math.PI / 4, 0),
+        ),
+      ),
     faceColors([face_px, eyeColor], [face_py, eyeColor], [face_pz, eyeColor]),
     translate(0, sideHeight - gap / 2, -depth / 4),
   );
@@ -602,15 +601,18 @@ export var scanner_create = () => {
     faceColors([face_pz, eyeColor]),
     deleteFaces(face_nz),
   );
-  return mergeAll(
-    head,
-    // Tail
-    box(
-      [size, size, length - headLength],
-      relativeAlign(pz, head, nz),
-      $scale([nz, { x: 0, y: 0 }]),
-      deleteFaces(face_pz),
+  return geom_applyQuaternion(
+    mergeAll(
+      head,
+      // Tail
+      box(
+        [size, size, length - headLength],
+        relativeAlign(pz, head, nz),
+        $scale([nz, { x: 0, y: 0 }]),
+        deleteFaces(face_pz),
+      ),
     ),
+    quat_setFromEuler(_quat, vec3_set(_vector, 0, 0, Math.PI / 4)),
   );
 };
 
