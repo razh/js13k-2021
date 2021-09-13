@@ -1,4 +1,4 @@
-import { findTarget, getRange, isVisible, RANGE_MELEE } from './ai.js';
+import { findTarget, getRange, RANGE_MELEE } from './ai.js';
 import { playEnemyDeath, playShoot } from './audio.js';
 import { boxGeom_create } from './boxGeom.js';
 import { nx_ny, ny } from './boxIndices.js';
@@ -491,13 +491,7 @@ export var map0 = (gl, scene, camera) => {
 
         var bulletOrigin = Object.assign(_v1, mesh.position);
         bulletOrigin.y += PHANTOM_Y;
-        if (
-          enemyBulletInterval(
-            dt,
-            findTarget(mesh, playerMesh) &&
-              isVisible(staticMeshes, bulletOrigin, playerMesh.position),
-          )
-        ) {
+        if (enemyBulletInterval(dt, findTarget(mesh, playerMesh))) {
           var bullet = fireEnemyBullet();
 
           Object.assign(bullet.position, bulletOrigin);
@@ -633,13 +627,7 @@ export var map0 = (gl, scene, camera) => {
         }
 
         var bulletOrigin = Object.assign(_v1, mesh.position);
-        if (
-          enemyBulletInterval(
-            dt,
-            findTarget(mesh, playerMesh) &&
-              isVisible(staticMeshes, bulletOrigin, playerMesh.position),
-          )
-        ) {
+        if (enemyBulletInterval(dt, findTarget(mesh, playerMesh))) {
           var bullet = fireEnemyBullet();
 
           Object.assign(bullet.position, bulletOrigin);
