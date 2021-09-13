@@ -26,8 +26,8 @@ export var RANGE_FAR = 3;
 export var getRange = (enemy, target) => {
   var distance = vec3_distanceTo(enemy.position, target.position);
   if (distance < MELEE_DISTANCE) return RANGE_MELEE;
-  if (distance < 256) return RANGE_NEAR;
-  if (distance < 512) return RANGE_MID;
+  if (distance < 512) return RANGE_NEAR;
+  if (distance < 1024) return RANGE_MID;
   return RANGE_FAR;
 };
 

@@ -1,8 +1,8 @@
 import { findTarget, getRange, isVisible, RANGE_MELEE } from './ai.js';
 import { playEnemyDeath, playShoot } from './audio.js';
 import { boxGeom_create } from './boxGeom.js';
-import { ny, py } from './boxIndices.js';
-import { $scale, align } from './boxTransforms.js';
+import { nx_ny, ny } from './boxIndices.js';
+import { align } from './boxTransforms.js';
 import { DEBUG, gravity } from './constants.js';
 import { light_create } from './directionalLight.js';
 import { lightShadow_updateMatrices } from './directionalLightShadow.js';
@@ -23,6 +23,7 @@ import {
   phantom_create,
   platform_create,
   scanner_create,
+  spaceBetween,
   starfield_create,
 } from './models.js';
 import {
@@ -156,26 +157,7 @@ export var map0 = (gl, scene, camera) => {
   };
 
   [
-    // Target for testing bullet tunneling.
-    [
-      [32, 16, 8],
-      [0, 16, -128],
-    ],
-    [
-      [32, 24, 64],
-      [48, 0, 0],
-    ],
-    [
-      [256, 64, 256],
-      [-128, 128, -192],
-    ],
-    [
-      [256, 16, 256],
-      [-128, 128, -192],
-      [align(py), $scale([ny, { x: 7 / 8, z: 7 / 8 }])],
-    ],
-    [[512, 16, 512], [0, 0, 0], [align(py)]],
-    [[512, 16, 512], [0, 32, -672], [align(py)]],
+    [[160, 128, 256], [-512, 0, 128], [align(nx_ny)]],
   ].map(([dimensions, position, transforms = [align(ny)]]) =>
     vec3_set(
       createStaticMeshFromGeometry(box(dimensions, ...transforms)).position,
@@ -183,14 +165,48 @@ export var map0 = (gl, scene, camera) => {
     ),
   );
 
+  // Platforms
   [
     [
-      [96, 8, 128, 8],
-      [64, 64, -128],
+      [1024, 16, 768, 8],
+      [0, 0, 0],
     ],
     [
       [128, 8, 256, 8],
       [256, 48, -240],
+    ],
+    [
+      [128, 8, 172, 8],
+      [-256, 16, -192],
+    ],
+    [
+      [160, 8, 246, 8],
+      [128, 160, 0],
+    ],
+    [
+      [512, 8, 352, 8],
+      [0, 32, -544],
+    ],
+    [
+      [128, 8, 128, 8],
+      [256, 64, 0],
+    ],
+    [
+      [128, 8, 160, 8],
+      [320, 96, 144],
+    ],
+    [
+      [480, 8, 128, 8],
+      [0, 128, 256],
+    ],
+    // Center
+    [
+      [128, 24, 128, 8],
+      [-160, 12, 0],
+    ],
+    [
+      [128, 24, 128, 8],
+      [-160, 96, 0],
     ],
   ].map(([dimensions, position]) =>
     vec3_set(
@@ -199,18 +215,24 @@ export var map0 = (gl, scene, camera) => {
     ),
   );
 
-  [[[0, 52, -240], [192, 52, -240], 64, 8]].map(([start, end, width, height]) =>
+  // Bridges.
+  [
+    // [[0, 52, -240], [192, 52, -240], 64, 8]
+  ].map(([start, end, width, height]) =>
     createStaticMeshFromGeometry(
       bridge_create(vec3_create(...start), vec3_create(...end), width, height),
     ),
   );
 
-  vec3_set(
-    createStaticMeshFromGeometry(column_create()).position,
-    -32,
-    0,
-    -128,
-  );
+  // Columns.
+  spaceBetween(256, 0, 4)
+    .map(z => [-340, 0, z])
+    .map(position =>
+      vec3_set(
+        createStaticMeshFromGeometry(column_create(24, 128)).position,
+        ...position,
+      ),
+    );
 
   var starfieldMaterial = material_create();
   vec3_setScalar(starfieldMaterial.emissive, 1);
@@ -372,10 +394,10 @@ export var map0 = (gl, scene, camera) => {
     var stopSpeed = 100;
     var friction = 6;
 
-    var enemyBulletInterval = interval_create(0.5);
+    var enemyBulletInterval = interval_create(1.1);
 
     var mesh = entity_add(
-      enemyHealth_create(physics_add(createPhantomMesh(), BODY_DYNAMIC), 10),
+      enemyHealth_create(physics_add(createPhantomMesh(), BODY_DYNAMIC), 5),
       component_create(dt => {
         if (state === PHANTOM_STATE_NONE && findTarget(mesh, playerMesh)) {
           state === PHANTOM_STATE_ALERT;
@@ -430,7 +452,7 @@ export var map0 = (gl, scene, camera) => {
           );
 
           if (!trace.allsolid) {
-            vec3_setScalar(wishDirection, 0);
+            // vec3_setScalar(wishDirection, 0);
           }
 
           if (DEBUG) {
@@ -531,7 +553,7 @@ export var map0 = (gl, scene, camera) => {
     var stopSpeed = 20;
     var friction = 0.3;
 
-    var enemyBulletInterval = interval_create(0.5);
+    var enemyBulletInterval = interval_create(1.3);
 
     var minPlayerDistance = randFloat(64, 128);
 
@@ -539,7 +561,7 @@ export var map0 = (gl, scene, camera) => {
     var minGroundHeight = 32;
 
     var mesh = entity_add(
-      enemyHealth_create(physics_add(createScannerMesh(), BODY_DYNAMIC), 5),
+      enemyHealth_create(physics_add(createScannerMesh(), BODY_DYNAMIC), 2),
       component_create(dt => {
         if (state === SCANNER_STATE_NONE && findTarget(mesh, playerMesh)) {
           state = SCANNER_STATE_ALERT;
@@ -693,10 +715,14 @@ export var map0 = (gl, scene, camera) => {
   };
 
   var bulletInterval = interval_create(0.1);
+  var shipBulletInterval = interval_create(5);
 
   var bodies;
   var staticBodies;
   var staticMeshes;
+
+  var phantomSpawnInterval = interval_create(7);
+  var scannerSpawnInterval = interval_create(3);
 
   entity_add(
     map,
@@ -795,6 +821,28 @@ export var map0 = (gl, scene, camera) => {
           if (entity.isPhantom) score += 100;
           if (entity.isScanner) score += 50;
         };
+      }
+
+      if (phantomSpawnInterval(dt)) {
+        var phantomEnemyMesh = createPhantomEnemy();
+        vec3_set(
+          phantomEnemyMesh.position,
+          randFloat(-160, 150),
+          randFloat(128, 32),
+          randFloat(-512, -640),
+        );
+        object3d_add(map, phantomEnemyMesh);
+      }
+
+      if (scannerSpawnInterval(dt)) {
+        var scannerEnemyMesh = createScannerEnemy();
+        vec3_set(
+          scannerEnemyMesh.position,
+          randFloat(-160, 160),
+          randFloat(128, 32),
+          randFloat(-512, -720),
+        );
+        object3d_add(map, scannerEnemyMesh);
       }
     }),
   );
