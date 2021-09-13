@@ -1,6 +1,7 @@
 // https://github.com/id-Software/Quake-Tools/blob/master/qcc/v101qc/ai.qc
 // https://github.com/id-Software/Quake-2/blob/master/game/g_ai.c
 
+import { ray_create, ray_intersectObjects } from './ray.js';
 import {
   vec3_applyQuaternion,
   vec3_create,
@@ -11,6 +12,7 @@ import {
   vec3_Z,
 } from './vec3.js';
 
+var _ray = ray_create();
 var _v0 = vec3_create();
 var _v1 = vec3_create();
 
@@ -49,4 +51,10 @@ export var findTarget = (enemy, target) => {
   }
 
   return true;
+};
+
+export var isVisible = (meshes, origin, target) => {
+  Object.assign(_ray.origin, origin);
+  vec3_subVectors(_ray.direction, target, origin);
+  return !ray_intersectObjects(_ray, meshes).length;
 };
