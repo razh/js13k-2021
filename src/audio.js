@@ -163,6 +163,16 @@ var play = sound => playSound(sound, destination);
 var shoot = generateNotes(mul(mul(saw, noise), decay(24)), 0.5, 1);
 export var playShoot = () => play(shoot[16]);
 
+var jump = generateNotes(
+  mul(
+    mul(square, pitchJump(square, toFreq(36) - toFreq(31), 0.1)),
+    adsr(0.003, 0.05, 0.01, 0.03, 0.5),
+  ),
+  0.3,
+  0.2,
+);
+export var playJump = () => play(jump[31]);
+
 var enemyDeath = generateNotes(
   mul(
     mul(saw, pitchJump(square, toFreq(27) - toFreq(15), 0.1)),
