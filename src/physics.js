@@ -12,6 +12,7 @@ import {
   entity_filter,
   entity_find,
 } from './entity.js';
+import { trigger } from './events.js';
 import { object3d_traverse } from './object3d.js';
 import {
   OVERCLIP,
@@ -292,6 +293,9 @@ export var physics_update = (() => {
           ) {
             continue;
           }
+
+          trigger(bodyA.parent, 'collide', bodyB.parent);
+          trigger(bodyB.parent, 'collide', bodyA.parent);
 
           narrowPhase(bodyA, bodyB, boxA, boxB);
         }

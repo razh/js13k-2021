@@ -17,9 +17,9 @@ var _v1 = vec3_create();
 var MELEE_DISTANCE = 64;
 
 export var RANGE_MELEE = 0;
-var RANGE_NEAR = 1;
-var RANGE_MID = 2;
-var RANGE_FAR = 3;
+export var RANGE_NEAR = 1;
+export var RANGE_MID = 2;
+export var RANGE_FAR = 3;
 
 export var getRange = (enemy, target) => {
   var distance = vec3_distanceTo(enemy.position, target.position);
