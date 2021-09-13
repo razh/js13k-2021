@@ -639,3 +639,13 @@ export var starfield_create = (radius, count) => {
 
   return mergeAll(...stars);
 };
+
+export var healthPack_create = () => {
+  var size = 32;
+  var depth = 8;
+  return translate(
+    0,
+    size,
+    0,
+  )(mergeAll(box([size / 3, size, depth]), box([size, size / 3, depth])));
+};
