@@ -1,4 +1,4 @@
-import { findTarget, getRange, inFront, RANGE_MELEE } from './ai.js';
+import { findTarget, getRange, RANGE_MELEE, RANGE_NEAR } from './ai.js';
 import { playEnemyDeath, playShoot } from './audio.js';
 import { boxGeom_create } from './boxGeom.js';
 import { ny, py } from './boxIndices.js';
@@ -11,7 +11,7 @@ import { on } from './events.js';
 import { interval_create } from './interval.js';
 import { keys_create } from './keys.js';
 import { material_create } from './material.js';
-import { randFloatSpread } from './math.js';
+import { randFloat, randFloatSpread } from './math.js';
 import { mesh_create } from './mesh.js';
 import {
   box,
@@ -65,6 +65,7 @@ import {
   vec3_applyQuaternion,
   vec3_create,
   vec3_cross,
+  vec3_distanceTo,
   vec3_dot,
   vec3_length,
   vec3_multiplyScalar,
@@ -236,15 +237,6 @@ export var map0 = (gl, scene, camera) => {
     return mesh;
   };
 
-  var phantomMesh = physics_add(createPhantomMesh(), BODY_STATIC);
-  vec3_set(phantomMesh.position, -128, 0, -64);
-  object3d_add(map, phantomMesh);
-  entity_add(
-    phantomMesh,
-    component_create(
-      () => (phantomMesh.position.z = 96 * Math.cos(1e-3 * Date.now())),
-    ),
-  );
   var enemyHealth_create = (enemy, initialHealth) => {
     var health = initialHealth;
     var hitTimeout;
@@ -273,7 +265,6 @@ export var map0 = (gl, scene, camera) => {
     });
     return enemy;
   };
-  enemyHealth_create(phantomMesh, 10);
 
   var removeAfter_create = (entity, duration) => {
     var time = 0;
@@ -297,17 +288,6 @@ export var map0 = (gl, scene, camera) => {
     mesh.receiveShadow = true;
     return mesh;
   };
-
-  var scannerMesh = physics_add(createScannerMesh(), BODY_STATIC);
-  vec3_set(scannerMesh.position, -64, 52, -128);
-  object3d_add(map, scannerMesh);
-  entity_add(
-    scannerMesh,
-    component_create(
-      () => (scannerMesh.position.z = 96 * Math.sin(1e-3 * Date.now())),
-    ),
-  );
-  enemyHealth_create(scannerMesh, 5);
 
   var debugPoints = (...points) =>
     points.map(([point, color]) => {
@@ -347,22 +327,30 @@ export var map0 = (gl, scene, camera) => {
   };
 
   var createPhantomEnemy = () => {
-    var PHANTOM_STATE_IDLE = 0;
-    var PHANTOM_STATE_ALERT = 1;
-    var PHANTOM_STATE_SHOOT = 2;
-    var PHANTOM_STATE_MELEE = 3;
+    var PHANTOM_STATE_NONE = 0;
+    var PHANTOM_STATE_IDLE = 1;
+    var PHANTOM_STATE_ALERT = 2;
+    var PHANTOM_STATE_SHOOT = 3;
+    var PHANTOM_STATE_MELEE = 4;
 
-    var state = PHANTOM_STATE_IDLE;
+    var state = PHANTOM_STATE_NONE;
     var positionStart = vec3_create();
     var positionEnd = vec3_create();
     var trace = trace_create();
+
+    var wishSpeed = 160;
+    var accel = 10;
+    var stopSpeed = 100;
+    var friction = 6;
 
     var enemyBulletInterval = interval_create(0.5);
 
     var mesh = entity_add(
       enemyHealth_create(physics_add(createPhantomMesh(), BODY_DYNAMIC), 10),
       component_create(dt => {
-        var wishSpeed = 160;
+        if (state === PHANTOM_STATE_NONE && findTarget(mesh, playerMesh)) {
+          state === PHANTOM_STATE_ALERT;
+        }
 
         var enemyPhysics = get_physics_component(mesh);
         vec3_addScaledVector(enemyPhysics.velocity, gravity, dt);
@@ -430,26 +418,24 @@ export var map0 = (gl, scene, camera) => {
         }
 
         // Move towards player.
-        var accel = 10;
-        var stopSpeed = 100;
-        var friction = 6;
-        var y = enemyPhysics.velocity.y;
-        enemyPhysics.velocity.y = 0;
-        var speed = vec3_length(enemyPhysics.velocity);
-        var control = Math.max(speed, stopSpeed);
-        var newSpeed = Math.max(speed - control * friction * dt, 0);
-        vec3_setLength(enemyPhysics.velocity, newSpeed);
-        var currentSpeed = vec3_dot(enemyPhysics.velocity, wishDirection);
-        enemyPhysics.velocity.y = y;
-        var addSpeed = wishSpeed - currentSpeed;
-        if (addSpeed <= 0) return;
-        var accelSpeed = Math.min(accel * dt * wishSpeed, addSpeed);
         if (range !== RANGE_MELEE) {
-          vec3_addScaledVector(
-            enemyPhysics.velocity,
-            wishDirection,
-            accelSpeed,
-          );
+          var y = enemyPhysics.velocity.y;
+          enemyPhysics.velocity.y = 0;
+          var speed = vec3_length(enemyPhysics.velocity);
+          var control = Math.max(speed, stopSpeed);
+          var newSpeed = Math.max(speed - control * friction * dt, 0);
+          vec3_setLength(enemyPhysics.velocity, newSpeed);
+          var currentSpeed = vec3_dot(enemyPhysics.velocity, wishDirection);
+          enemyPhysics.velocity.y = y;
+          var addSpeed = wishSpeed - currentSpeed;
+          if (addSpeed > 0) {
+            var accelSpeed = Math.min(accel * dt * wishSpeed, addSpeed);
+            vec3_addScaledVector(
+              enemyPhysics.velocity,
+              wishDirection,
+              accelSpeed,
+            );
+          }
         }
 
         if (enemyBulletInterval(dt, findTarget(mesh, playerMesh))) {
@@ -489,24 +475,43 @@ export var map0 = (gl, scene, camera) => {
 
     return mesh;
   };
-  var enemyMesh = createPhantomEnemy();
-  vec3_set(enemyMesh.position, 128, 32, -640);
-  object3d_add(map, enemyMesh);
 
   var createScannerEnemy = () => {
-    var SCANNER_STATE_IDLE = 0;
-    var SCANNER_STATE_ALERT = 1;
+    var SCANNER_STATE_NONE = 0;
+    var SCANNER_STATE_IDLE = 1;
+    var SCANNER_STATE_ALERT = 2;
     var SCANNER_STATE_SHOOT = 2;
 
-    var state = SCANNER_STATE_IDLE;
+    var state = SCANNER_STATE_NONE;
+    var forceVelocity = vec3_create();
+    var positionStart = vec3_create();
+    var positionEnd = vec3_create();
+    var trace = trace_create();
+
+    var wishSpeed = 400;
+    var accel = 10;
+    var stopSpeed = 20;
+    var friction = 0.3;
+
+    var enemyBulletInterval = interval_create(0.5);
+
+    var minPlayerDistance = randFloat(64, 128);
+
+    // CNPC_Manhack:MaintainGroundHeight
+    var minGroundHeight = 32;
 
     var mesh = entity_add(
       enemyHealth_create(physics_add(createScannerMesh(), BODY_DYNAMIC), 5),
       component_create(dt => {
-        var wishSpeed = 120;
+        if (state === SCANNER_STATE_NONE && findTarget(mesh, playerMesh)) {
+          state = SCANNER_STATE_ALERT;
+        }
 
         var enemyPhysics = get_physics_component(mesh);
-        vec3_addScaledVector(enemyPhysics.velocity, gravity, dt);
+        vec3_multiplyScalar(
+          Object.assign(forceVelocity, enemyPhysics.velocity),
+          -0.5,
+        );
 
         var range = getRange(mesh, playerMesh);
         var wishDirection =
@@ -522,7 +527,76 @@ export var map0 = (gl, scene, camera) => {
             Math.atan2(wishDirection.x, wishDirection.z),
           );
           quat_rotateTowards(mesh.quaternion, _q0, Math.PI * dt);
+          vec3_setLength(Object.assign(_v1, wishDirection), wishSpeed);
         }
+
+        // Check if we can maintain ground height.
+        var y = enemyPhysics.velocity.y;
+        if (y <= 32) {
+          Object.assign(positionStart, mesh.position);
+          Object.assign(positionEnd, positionStart);
+          positionEnd.y -= minGroundHeight;
+          body_trace(
+            staticBodies,
+            enemyPhysics,
+            trace,
+            positionStart,
+            positionEnd,
+          );
+
+          if (trace.fraction !== 1) {
+            var speedAdjustment = Math.max(16, -y * 0.5);
+            forceVelocity.y += speedAdjustment * (1 - trace.fraction);
+          }
+        }
+
+        // Move towards player.
+        if (
+          range !== RANGE_MELEE &&
+          vec3_distanceTo(mesh.position, playerMesh.position) >
+            minPlayerDistance
+        ) {
+          var speed = vec3_length(enemyPhysics.velocity);
+          var control = Math.max(speed, stopSpeed);
+          var newSpeed = Math.max(speed - control * friction * dt, 0);
+          vec3_setLength(enemyPhysics.velocity, newSpeed);
+          var currentSpeed = vec3_dot(enemyPhysics.velocity, wishDirection);
+          var addSpeed = wishSpeed - currentSpeed;
+          if (addSpeed > 0) {
+            var accelSpeed = Math.min(accel * dt * wishSpeed, addSpeed);
+            vec3_addScaledVector(
+              enemyPhysics.velocity,
+              wishDirection,
+              accelSpeed,
+            );
+          }
+        }
+
+        if (enemyBulletInterval(dt, findTarget(mesh, playerMesh))) {
+          var bullet = fireEnemyBullet();
+
+          vec3_add(bullet.position, mesh.position);
+
+          object3d_lookAt(bullet, playerMesh.position);
+          var bulletPhysics = get_physics_component(bullet);
+          vec3_multiplyScalar(
+            vec3_applyQuaternion(
+              Object.assign(bulletPhysics.velocity, vec3_Z),
+              bullet.quaternion,
+            ),
+            400,
+          );
+
+          object3d_add(map, bullet);
+
+          bulletPhysics.collide = entity => {
+            if (entity.isEnemy) return false;
+            createExplosion(bullet.position);
+            object3d_remove(map, bullet);
+          };
+        }
+
+        vec3_add(enemyPhysics.velocity, forceVelocity);
       }),
     );
 
@@ -536,6 +610,34 @@ export var map0 = (gl, scene, camera) => {
 
     return mesh;
   };
+
+  if (DEBUG) {
+    var phantomMesh = physics_add(createPhantomMesh(), BODY_STATIC);
+    vec3_set(phantomMesh.position, -128, 0, -64);
+    object3d_add(map, phantomMesh);
+    entity_add(
+      phantomMesh,
+      component_create(
+        () => (phantomMesh.position.z = 96 * Math.cos(1e-3 * Date.now())),
+      ),
+    );
+    enemyHealth_create(phantomMesh, 10);
+
+    var scannerMesh = physics_add(createScannerMesh(), BODY_STATIC);
+    vec3_set(scannerMesh.position, -64, 52, -128);
+    object3d_add(map, scannerMesh);
+    entity_add(
+      scannerMesh,
+      component_create(
+        () => (scannerMesh.position.z = 96 * Math.sin(1e-3 * Date.now())),
+      ),
+    );
+    enemyHealth_create(scannerMesh, 5);
+
+    var enemyMesh = createPhantomEnemy();
+    vec3_set(enemyMesh.position, 128, 32, -640);
+    object3d_add(map, enemyMesh);
+  }
 
   var createExplosion = position => {
     var explosion = explosion_create(4);
@@ -681,7 +783,6 @@ export var map0 = (gl, scene, camera) => {
         if (keys.Quote) {
           var scannerEnemyMesh = createScannerEnemy();
           Object.assign(scannerEnemyMesh.position, intersection.point);
-          scannerEnemyMesh.position.y += 48;
           object3d_add(map, scannerEnemyMesh);
         }
       }

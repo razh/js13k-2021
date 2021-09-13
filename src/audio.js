@@ -170,8 +170,8 @@ var enemyDeath = generateNotes(
   ),
   1,
   0.4,
-)[15];
-export var playEnemyDeath = () => play(enemyDeath);
+);
+export var playEnemyDeath = () => play(enemyDeath[15]);
 
 
 addEventListener('click', () => audioContext.resume(), { once: true });
