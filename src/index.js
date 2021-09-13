@@ -55,7 +55,6 @@ var camera = camera_create(90);
 pointerLock_create(controls_create(camera), canvas);
 
 var { ambient, directional } = map0(gl, scene, camera);
-orthoCamera_updateProjectionMatrix(directional.shadow.camera);
 
 // Shader
 var program = createShaderProgram(gl, vert, frag);
@@ -112,7 +111,7 @@ gl.framebufferRenderbuffer(
 );
 
 var dt = 1 / 60;
-var accumulatedTime = 0;
+var accumulatedTime = dt;
 var previousTime;
 
 var update = () => {

@@ -5,6 +5,7 @@ import { ny, py } from './boxIndices.js';
 import { $scale, align } from './boxTransforms.js';
 import { DEBUG, gravity } from './constants.js';
 import { light_create } from './directionalLight.js';
+import { lightShadow_updateMatrices } from './directionalLightShadow.js';
 import { component_create, entity_add } from './entity.js';
 import { interval_create } from './interval.js';
 import { keys_create } from './keys.js';
@@ -31,6 +32,7 @@ import {
   object3d_rotateX,
   object3d_rotateY,
   object3d_rotateZ,
+  object3d_updateWorldMatrix,
 } from './object3d.js';
 import { orthoCamera_updateProjectionMatrix } from './orthoCamera.js';
 import {
@@ -132,6 +134,9 @@ export var map0 = (gl, scene, camera) => {
     // HACK: Reduce shadow jitter.
     orthoCamera_updateProjectionMatrix(directional.shadow.camera);
   };
+
+  object3d_updateWorldMatrix(directional);
+  lightShadow_updateMatrices(directional.shadow, directional);
   updateShadowCamera();
 
   var createStaticMeshFromGeometry = geometry => {
