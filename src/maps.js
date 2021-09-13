@@ -1,4 +1,4 @@
-import { findTarget, getRange, RANGE_MELEE } from './ai.js';
+import { findTarget, getRange, inFront, RANGE_MELEE } from './ai.js';
 import { playEnemyDeath, playShoot } from './audio.js';
 import { boxGeom_create } from './boxGeom.js';
 import { ny, py } from './boxIndices.js';
@@ -7,6 +7,7 @@ import { DEBUG, gravity } from './constants.js';
 import { light_create } from './directionalLight.js';
 import { lightShadow_updateMatrices } from './directionalLightShadow.js';
 import { component_create, entity_add } from './entity.js';
+import { on } from './events.js';
 import { interval_create } from './interval.js';
 import { keys_create } from './keys.js';
 import { material_create } from './material.js';
@@ -32,6 +33,7 @@ import {
   object3d_rotateX,
   object3d_rotateY,
   object3d_rotateZ,
+  object3d_traverse,
   object3d_updateWorldMatrix,
 } from './object3d.js';
 import { orthoCamera_updateProjectionMatrix } from './orthoCamera.js';
@@ -224,17 +226,17 @@ export var map0 = (gl, scene, camera) => {
   object3d_rotateZ(dreadnoughtMesh, -Math.PI / 4);
   object3d_add(map, dreadnoughtMesh);
 
-  var createPhantom = () => {
-    var phantomMaterial = material_create();
-    var phantomMesh = mesh_create(phantom_create(), phantomMaterial);
-    vec3_setScalar(phantomMaterial.color, 0.5);
-    vec3_setScalar(phantomMaterial.specular, 1);
-    phantomMesh.castShadow = true;
-    phantomMesh.receiveShadow = true;
-    return phantomMesh;
+  var createPhantomMesh = () => {
+    var material = material_create();
+    var mesh = mesh_create(phantom_create(), material);
+    vec3_setScalar(material.color, 0.5);
+    vec3_setScalar(material.specular, 1);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    return mesh;
   };
 
-  var phantomMesh = physics_add(createPhantom(), BODY_STATIC);
+  var phantomMesh = physics_add(createPhantomMesh(), BODY_STATIC);
   vec3_set(phantomMesh.position, -128, 0, -64);
   object3d_add(map, phantomMesh);
   entity_add(
@@ -247,7 +249,7 @@ export var map0 = (gl, scene, camera) => {
     var health = initialHealth;
     var hitTimeout;
     var enemyPhysics = get_physics_component(enemy);
-    enemyPhysics.collide = entity => {
+    on(enemy, 'collide', entity => {
       var entityPhysics = get_physics_component(entity).physics;
       if (entityPhysics === BODY_BULLET) {
         health--;
@@ -268,21 +270,36 @@ export var map0 = (gl, scene, camera) => {
           hitTimeout = setTimeout(() => (enemy.material.emissive.x = 0), 48);
         }
       }
-    };
+    });
     return enemy;
   };
   enemyHealth_create(phantomMesh, 10);
 
-  var scannerMaterial = material_create();
-  vec3_setScalar(scannerMaterial.color, 0.5);
-  vec3_setScalar(scannerMaterial.specular, 1);
-  var scannerMesh = physics_add(
-    mesh_create(scanner_create(), scannerMaterial),
-    BODY_STATIC,
-  );
+  var removeAfter_create = (entity, duration) => {
+    var time = 0;
+    return entity_add(
+      entity,
+      component_create(dt => {
+        time += dt;
+        if (time > duration) {
+          object3d_remove(entity.parent, entity);
+        }
+      }),
+    );
+  };
+
+  var createScannerMesh = () => {
+    var material = material_create();
+    vec3_setScalar(material.color, 0.5);
+    vec3_setScalar(material.specular, 1);
+    var mesh = mesh_create(scanner_create(), material);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    return mesh;
+  };
+
+  var scannerMesh = physics_add(createScannerMesh(), BODY_STATIC);
   vec3_set(scannerMesh.position, -64, 52, -128);
-  scannerMesh.castShadow = true;
-  scannerMesh.receiveShadow = true;
   object3d_add(map, scannerMesh);
   entity_add(
     scannerMesh,
@@ -292,98 +309,233 @@ export var map0 = (gl, scene, camera) => {
   );
   enemyHealth_create(scannerMesh, 5);
 
-  var ENEMY_STATE_PATROL = 0;
-  var ENEMY_STATE_HUNT = 1;
-  var ENEMY_STATE_SHOOT = 2;
-  var ENEMY_STATE_MELEE = 3;
+  var debugPoints = (...points) =>
+    points.map(([point, color]) => {
+      var material = material_create();
+      vec3_set(material.emissive, ...color);
+      var target = mesh_create(box([2, 2, 2]), material);
+      Object.assign(target.position, point);
+      object3d_add(map, target);
+      setTimeout(() => object3d_remove(map, target), 32);
+      return target;
+    });
 
-  var enemyState = ENEMY_STATE_PATROL;
-  var enemyPositionStart = vec3_create();
-  var enemyPositionEnd = vec3_create();
-  var enemyTrace = trace_create();
+  var fireShipBullet = () => {
+    var bulletGeometry = boxGeom_create(16, 16, 48);
+    var bulletMaterial = material_create();
+    vec3_set(bulletMaterial.emissive, 2, 0.5, 0.5);
 
-  var enemyMesh = entity_add(
-    enemyHealth_create(physics_add(createPhantom(), BODY_DYNAMIC), 10),
-    component_create(dt => {
-      var wishSpeed = 160;
+    var bullet = removeAfter_create(
+      physics_add(mesh_create(bulletGeometry, bulletMaterial), BODY_BULLET),
+    );
+    bullet.castShadow = true;
 
-      var enemyPhysics = get_physics_component(enemyMesh);
-      vec3_addScaledVector(enemyPhysics.velocity, gravity, dt);
-      var wishDirection = findTarget(enemyMesh, playerMesh)
-        ? vec3_subVectors(_v0, playerMesh.position, enemyMesh.position)
-        : vec3_setScalar(_v0, 0);
-      wishDirection.y = 0;
-      vec3_normalize(wishDirection);
+    return bullet;
+  };
 
-      // Look at enemy.
-      if (vec3_length(wishDirection)) {
-        quat_setFromAxisAngle(
-          _q0,
-          vec3_Y,
-          Math.atan2(wishDirection.x, wishDirection.z),
-        );
-        quat_rotateTowards(enemyMesh.quaternion, _q0, Math.PI * dt);
+  var fireEnemyBullet = () => {
+    var bulletGeometry = boxGeom_create(2, 2, 8);
+    var bulletMaterial = material_create();
+    vec3_set(bulletMaterial.emissive, 2, 0.5, 0.5);
 
-        // Check if there's ground.
-        vec3_setLength(Object.assign(_v1, wishDirection), wishSpeed);
-        vec3_addScaledVector(
-          Object.assign(enemyPositionStart, enemyMesh.position),
-          _v1,
-          // 16 frames ahead.
-          16 * dt,
-        );
-        Object.assign(enemyPositionEnd, enemyPositionStart);
-        enemyPositionEnd.y -= 0.25;
-        body_trace(
-          staticBodies,
-          enemyPhysics,
-          enemyTrace,
-          enemyPositionStart,
-          enemyPositionEnd,
-        );
+    var bullet = removeAfter_create(
+      physics_add(mesh_create(bulletGeometry, bulletMaterial), BODY_BULLET),
+    );
+    bullet.castShadow = true;
 
-        if (DEBUG) {
-          var startMaterial = material_create();
-          var endMaterial = material_create();
-          vec3_set(startMaterial.emissive, 0, 1, 0);
-          vec3_set(endMaterial.emissive, 1, 1, 0);
-          var startTarget = mesh_create(box([2, 2, 2]), startMaterial);
-          var endTarget = mesh_create(box([2, 2, 2]), endMaterial);
-          Object.assign(startTarget.position, enemyPositionStart);
-          Object.assign(endTarget.position, enemyPositionEnd);
-          object3d_add(map, startTarget);
-          object3d_add(map, endTarget);
-          setTimeout(() => object3d_remove(map, startTarget), 32);
-          setTimeout(() => object3d_remove(map, endTarget), 32);
+    return bullet;
+  };
 
-          if (!enemyTrace.allsolid) {
+  var createPhantomEnemy = () => {
+    var PHANTOM_STATE_IDLE = 0;
+    var PHANTOM_STATE_ALERT = 1;
+    var PHANTOM_STATE_SHOOT = 2;
+    var PHANTOM_STATE_MELEE = 3;
+
+    var state = PHANTOM_STATE_IDLE;
+    var positionStart = vec3_create();
+    var positionEnd = vec3_create();
+    var trace = trace_create();
+
+    var enemyBulletInterval = interval_create(0.5);
+
+    var mesh = entity_add(
+      enemyHealth_create(physics_add(createPhantomMesh(), BODY_DYNAMIC), 10),
+      component_create(dt => {
+        var wishSpeed = 160;
+
+        var enemyPhysics = get_physics_component(mesh);
+        vec3_addScaledVector(enemyPhysics.velocity, gravity, dt);
+        var range = getRange(mesh, playerMesh);
+        var wishDirection =
+          state === PHANTOM_STATE_ALERT || findTarget(mesh, playerMesh)
+            ? vec3_subVectors(_v0, playerMesh.position, mesh.position)
+            : vec3_setScalar(_v0, 0);
+        wishDirection.y = 0;
+        vec3_normalize(wishDirection);
+
+        if (vec3_length(wishDirection)) {
+          quat_setFromAxisAngle(
+            _q0,
+            vec3_Y,
+            Math.atan2(wishDirection.x, wishDirection.z),
+          );
+          quat_rotateTowards(mesh.quaternion, _q0, Math.PI * dt);
+
+          // Check if we can move.
+          vec3_setLength(Object.assign(_v1, wishDirection), wishSpeed);
+          Object.assign(positionStart, mesh.position);
+          vec3_addScaledVector(
+            Object.assign(positionEnd, positionStart),
+            _v1,
+            // 16 frames ahead.
+            16 * dt,
+          );
+          if (DEBUG) {
+            body_trace(
+              staticBodies,
+              enemyPhysics,
+              trace,
+              positionStart,
+              positionEnd,
+            );
+          }
+
+          // Check if there's ground.
+          Object.assign(positionStart, positionEnd);
+          positionEnd.y -= 0.25;
+          body_trace(
+            staticBodies,
+            enemyPhysics,
+            trace,
+            positionStart,
+            positionEnd,
+          );
+
+          if (!trace.allsolid) {
             vec3_setScalar(wishDirection, 0);
           }
-        }
-      }
 
-      // Move towards player.
-      var accel = 10;
-      var stopSpeed = 100;
-      var friction = 6;
-      var y = enemyPhysics.velocity.y;
-      enemyPhysics.velocity.y = 0;
-      var speed = vec3_length(enemyPhysics.velocity);
-      var control = Math.max(speed, stopSpeed);
-      var newSpeed = Math.max(speed - control * friction * dt, 0);
-      vec3_setLength(enemyPhysics.velocity, newSpeed);
-      var currentSpeed = vec3_dot(enemyPhysics.velocity, wishDirection);
-      enemyPhysics.velocity.y = y;
-      var addSpeed = wishSpeed - currentSpeed;
-      if (addSpeed <= 0) return;
-      var accelSpeed = Math.min(accel * dt * wishSpeed, addSpeed);
-      if (getRange(enemyMesh, playerMesh) !== RANGE_MELEE) {
-        vec3_addScaledVector(enemyPhysics.velocity, wishDirection, accelSpeed);
+          if (DEBUG) {
+            var debugMeshes = debugPoints(
+              [mesh.position, [0, 1, 0]],
+              [positionStart, [0, 1, 0]],
+              [positionEnd, [0, 1, 0]],
+            );
+
+            if (!trace.allsolid) {
+              vec3_set(debugMeshes[1].material.emissive, 1, 0, 0);
+            }
+          }
+        }
+
+        // Move towards player.
+        var accel = 10;
+        var stopSpeed = 100;
+        var friction = 6;
+        var y = enemyPhysics.velocity.y;
+        enemyPhysics.velocity.y = 0;
+        var speed = vec3_length(enemyPhysics.velocity);
+        var control = Math.max(speed, stopSpeed);
+        var newSpeed = Math.max(speed - control * friction * dt, 0);
+        vec3_setLength(enemyPhysics.velocity, newSpeed);
+        var currentSpeed = vec3_dot(enemyPhysics.velocity, wishDirection);
+        enemyPhysics.velocity.y = y;
+        var addSpeed = wishSpeed - currentSpeed;
+        if (addSpeed <= 0) return;
+        var accelSpeed = Math.min(accel * dt * wishSpeed, addSpeed);
+        if (range !== RANGE_MELEE) {
+          vec3_addScaledVector(
+            enemyPhysics.velocity,
+            wishDirection,
+            accelSpeed,
+          );
+        }
+
+        if (enemyBulletInterval(dt, findTarget(mesh, playerMesh))) {
+          var bullet = fireEnemyBullet();
+
+          vec3_add(bullet.position, mesh.position);
+          bullet.position.y += 52;
+
+          object3d_lookAt(bullet, playerMesh.position);
+          var bulletPhysics = get_physics_component(bullet);
+          vec3_multiplyScalar(
+            vec3_applyQuaternion(
+              Object.assign(bulletPhysics.velocity, vec3_Z),
+              bullet.quaternion,
+            ),
+            400,
+          );
+
+          object3d_add(map, bullet);
+
+          bulletPhysics.collide = entity => {
+            if (entity.isEnemy) return false;
+            createExplosion(bullet.position);
+            object3d_remove(map, bullet);
+          };
+        }
+      }),
+    );
+
+    mesh.isEnemy = true;
+
+    on(mesh, 'collide', entity => {
+      if (get_physics_component(entity).physics === BODY_BULLET) {
+        state = PHANTOM_STATE_ALERT;
       }
-    }),
-  );
+    });
+
+    return mesh;
+  };
+  var enemyMesh = createPhantomEnemy();
   vec3_set(enemyMesh.position, 128, 32, -640);
   object3d_add(map, enemyMesh);
+
+  var createScannerEnemy = () => {
+    var SCANNER_STATE_IDLE = 0;
+    var SCANNER_STATE_ALERT = 1;
+    var SCANNER_STATE_SHOOT = 2;
+
+    var state = SCANNER_STATE_IDLE;
+
+    var mesh = entity_add(
+      enemyHealth_create(physics_add(createScannerMesh(), BODY_DYNAMIC), 5),
+      component_create(dt => {
+        var wishSpeed = 120;
+
+        var enemyPhysics = get_physics_component(mesh);
+        vec3_addScaledVector(enemyPhysics.velocity, gravity, dt);
+
+        var range = getRange(mesh, playerMesh);
+        var wishDirection =
+          state === SCANNER_STATE_ALERT || findTarget(mesh, playerMesh)
+            ? vec3_subVectors(_v0, playerMesh.position, mesh.position)
+            : vec3_setScalar(_v0, 0);
+        vec3_normalize(wishDirection);
+
+        if (vec3_length(wishDirection)) {
+          quat_setFromAxisAngle(
+            _q0,
+            vec3_Y,
+            Math.atan2(wishDirection.x, wishDirection.z),
+          );
+          quat_rotateTowards(mesh.quaternion, _q0, Math.PI * dt);
+        }
+      }),
+    );
+
+    mesh.isEnemy = true;
+
+    on(mesh, 'collide', entity => {
+      if (get_physics_component(entity).physics === BODY_BULLET) {
+        state = SCANNER_STATE_ALERT;
+      }
+    });
+
+    return mesh;
+  };
 
   var createExplosion = position => {
     var explosion = explosion_create(4);
@@ -438,15 +590,9 @@ export var map0 = (gl, scene, camera) => {
         var bulletMaterial = material_create();
         vec3_set(bulletMaterial.emissive, 0.5, 0.5, 2);
 
-        var time = 0;
-        var bullet = entity_add(
+        var bullet = removeAfter_create(
           physics_add(mesh_create(bulletGeometry, bulletMaterial), BODY_BULLET),
-          component_create(dt => {
-            time += dt;
-            if (time > 4) {
-              object3d_remove(map, bullet);
-            }
-          }),
+          4,
         );
         bullet.castShadow = true;
 
@@ -502,9 +648,12 @@ export var map0 = (gl, scene, camera) => {
         vec3_set(ray.direction, 0, 0, -1),
         camera.quaternion,
       );
-      var staticMeshes = physics_bodies(scene)
-        .filter(body => body.physics === BODY_STATIC)
-        .map(body => body.parent);
+      var staticMeshes = staticBodies?.map(body => body.parent) || [];
+      staticMeshes = [];
+      object3d_traverse(
+        map,
+        object => object.geometry && staticMeshes.push(object),
+      );
       var intersection = ray_intersectObjects(ray, staticMeshes)?.[0];
       if (intersection) {
         console.log(
@@ -521,6 +670,19 @@ export var map0 = (gl, scene, camera) => {
         Object.assign(target.position, intersection.point);
         object3d_add(map, target);
         setTimeout(() => object3d_remove(map, target), 1000);
+
+        if (keys.Semicolon) {
+          var phantomEnemyMesh = createPhantomEnemy();
+          Object.assign(phantomEnemyMesh.position, intersection.point);
+          object3d_add(map, phantomEnemyMesh);
+        }
+
+        if (keys.Quote) {
+          var scannerEnemyMesh = createScannerEnemy();
+          Object.assign(scannerEnemyMesh.position, intersection.point);
+          scannerEnemyMesh.position.y += 48;
+          object3d_add(map, scannerEnemyMesh);
+        }
       }
     });
   }
