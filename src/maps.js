@@ -613,14 +613,15 @@ export var map0 = (gl, scene, camera) => {
 
         var bulletPhysics = get_physics_component(bullet);
         vec3_addScaledVector(
-          Object.assign(bulletPhysics.velocity, playerPhysics.velocity),
+          bulletPhysics.velocity,
+          // Object.assign(bulletPhysics.velocity, playerPhysics.velocity),
           vec3_applyQuaternion(Object.assign(_v0, vec3_Z), bullet.quaternion),
           800,
         );
 
         vec3_add(
           vec3_applyQuaternion(
-            vec3_set(bullet.position, playerWidth / 2, -playerHeight / 8, 0),
+            vec3_set(bullet.position, playerWidth / 4, -playerHeight / 8, 0),
             camera.quaternion,
           ),
           playerMesh.position,
